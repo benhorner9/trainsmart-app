@@ -1,0 +1,1078 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<meta name="referrer" content="no-referrer">
+<meta name="theme-color" content="#0d1b24">
+<title>TrainSmart Client App</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;800&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  /* Layout idea: one narrow logbook column. Big condensed numerals, and plate yellow reserved for the single next action. */
+  --ink:#0d1b24;
+  --panel:#14262f;
+  --line:#274350;
+  --chalk:#eef1ea;
+  --mute:#8fa4ad;
+  --plate:#f3c13a;
+  --plate-ink:#241b00;
+  --good:#5dd39e;
+  --warn:#ff9d4d;
+  --bad:#ff6b6b;
+  --font-display:'Big Shoulders Display','Arial Narrow','Roboto Condensed',Impact,sans-serif;
+  --font-body:'Hanken Grotesk',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+  color-scheme:dark;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+[hidden]{display:none!important}
+html,body{height:100%}
+body{background:var(--ink);color:var(--chalk);font:400 16px/1.45 var(--font-body);-webkit-text-size-adjust:100%;font-variant-numeric:tabular-nums}
+button,input,textarea{font:inherit;color:inherit}
+a{color:inherit;text-decoration:none}
+:focus-visible{outline:2px solid var(--plate);outline-offset:2px}
+
+.app{position:relative;height:100%;max-width:480px;margin:0 auto;display:flex;flex-direction:column;background:var(--ink);overflow:hidden}
+@media(min-width:520px){body{background:#08121a}.app{border-left:1px solid var(--line);border-right:1px solid var(--line)}}
+
+.top{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:calc(12px + env(safe-area-inset-top)) 16px 10px}
+.brand{display:flex;align-items:center;gap:10px;min-width:0}
+.mark{display:grid;place-items:center;width:30px;height:30px;border-radius:8px;background:var(--plate);color:var(--plate-ink);font:800 17px/1 var(--font-display);letter-spacing:.02em}
+.brandname{font:700 13px/1.1 var(--font-body);letter-spacing:.1em;text-transform:uppercase;color:var(--chalk);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pill{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;border:1px solid var(--line);font:600 12px/1.2 var(--font-body);color:var(--mute);white-space:nowrap}
+.pill.good{color:var(--good);border-color:rgba(93,211,158,.45)}
+.pill.warn{color:var(--warn);border-color:rgba(255,157,77,.5)}
+
+main{flex:1;overflow-y:auto;overscroll-behavior:contain;padding:6px 16px 28px;-webkit-overflow-scrolling:touch}
+.view{display:flex;flex-direction:column;gap:14px}
+
+nav{display:grid;grid-template-columns:repeat(5,1fr);background:var(--panel);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom)}
+nav a{display:flex;flex-direction:column;align-items:center;gap:3px;padding:9px 0 8px;color:var(--mute);font:600 11px/1 var(--font-body);letter-spacing:.04em}
+nav a svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+nav a.on{color:var(--plate)}
+
+.eyebrow{font:700 12px/1 var(--font-body);letter-spacing:.12em;text-transform:uppercase;color:var(--mute)}
+.h1{font:800 46px/.95 var(--font-display);text-transform:uppercase;letter-spacing:.01em;text-wrap:balance}
+.h2{font:800 26px/1 var(--font-display);text-transform:uppercase;letter-spacing:.02em}
+.meta{color:var(--mute);font-size:14px}
+.hint{color:var(--mute);font-size:14px}
+.num{font:800 34px/1 var(--font-display);letter-spacing:.01em}
+.num small{font:600 13px/1 var(--font-body);color:var(--mute);margin-left:4px;letter-spacing:0}
+
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:10px}
+.card.next{background:var(--plate);border-color:var(--plate);color:var(--plate-ink)}
+.card.next .eyebrow,.card.next .meta{color:rgba(36,27,0,.72)}
+.card.next .h1{font-size:54px}
+
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:48px;padding:0 18px;border:0;border-radius:12px;font:700 16px/1 var(--font-body);cursor:pointer}
+.btn.primary{background:var(--plate);color:var(--plate-ink)}
+.btn.dark{background:var(--ink);color:var(--chalk)}
+.btn.ghost{background:transparent;border:1px solid var(--line);color:var(--chalk)}
+.btn.block{width:100%}
+.btn:disabled{opacity:.38;cursor:not-allowed}
+
+.tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.tile{background:var(--ink);border:1px solid var(--line);border-radius:12px;padding:10px 10px 9px;display:flex;flex-direction:column;gap:6px;min-width:0}
+.tile .num{font-size:28px}
+.tile .sub{font-size:12px;color:var(--mute);line-height:1.2}
+.tile .sub.ok{color:var(--good)}
+
+.week{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
+.day{display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 0 7px;border-radius:12px;border:1px solid var(--line);background:var(--ink);font-size:11px;color:var(--mute)}
+.day b{font:800 20px/1 var(--font-display);color:var(--chalk)}
+.day .dot{width:8px;height:8px;border-radius:50%;border:1.5px solid var(--line)}
+.day.done .dot{background:var(--good);border-color:var(--good)}
+.day.missed .dot{border-color:var(--warn);border-style:dashed}
+.day.today{border-color:var(--plate)}
+.day.today b{color:var(--plate)}
+
+.bar{height:8px;border-radius:99px;background:var(--ink);border:1px solid var(--line);overflow:hidden}
+.bar>i{display:block;height:100%;background:var(--good);border-radius:99px}
+
+.row{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.stack{display:flex;flex-direction:column;gap:10px}
+
+/* forms */
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{min-height:40px;padding:0 14px;border-radius:999px;border:1px solid var(--line);background:var(--ink);color:var(--mute);font:600 14px/1 var(--font-body);cursor:pointer}
+.chip.on{background:var(--plate);border-color:var(--plate);color:var(--plate-ink)}
+.fgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.field{display:flex;flex-direction:column;gap:6px;min-width:0}
+.field.wide{grid-column:1/-1}
+.fl{font:600 13px/1.2 var(--font-body);color:var(--mute)}
+.fl i{font-style:normal;font-weight:400;opacity:.8}
+.inwrap{position:relative;display:block}
+.inwrap input,.field textarea,.date input{width:100%;min-height:48px;padding:0 12px;background:var(--ink);border:1px solid var(--line);border-radius:10px;font-size:16px;color:var(--chalk)}
+.inwrap em{position:absolute;right:11px;top:50%;transform:translateY(-50%);font:500 12px/1 var(--font-body);color:var(--mute);font-style:normal;pointer-events:none;max-width:48%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.inwrap input{padding-right:78px}
+.field textarea{padding:12px;min-height:96px;resize:vertical;line-height:1.4}
+.inwrap input.bad,.field textarea.bad{border-color:var(--bad)}
+.ferr,.err{font-size:12px;color:var(--bad);min-height:0}
+.ferr:empty,.err:empty{display:none}
+.scale{display:grid;grid-template-columns:repeat(10,1fr);gap:4px}
+.scale button{min-height:40px;border-radius:8px;border:1px solid var(--line);background:var(--ink);color:var(--mute);font:600 14px/1 var(--font-body);cursor:pointer;padding:0}
+.scale button.on{background:var(--plate);border-color:var(--plate);color:var(--plate-ink)}
+.scale-ends{display:flex;justify-content:space-between;font-size:11px;color:var(--mute)}
+.toggle{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.banner{display:flex;gap:10px;align-items:flex-start;padding:12px 14px;border-radius:12px;border:1px solid var(--line);background:var(--panel);font-size:14px}
+.banner.ok{border-color:rgba(93,211,158,.5)}
+.banner.ok b{color:var(--good)}
+.banner.warn{border-color:rgba(255,157,77,.55)}
+.banner.warn b{color:var(--warn)}
+.banner ul{margin:6px 0 0 18px}
+.date input{min-height:40px;width:auto}
+.hr{height:1px;background:var(--line);border:0}
+
+/* train */
+.ex{gap:10px}
+.ex.done{border-color:rgba(93,211,158,.55)}
+.ex-head{display:flex;align-items:center;gap:10px}
+.ex-n{display:grid;place-items:center;width:28px;height:28px;border-radius:8px;background:var(--ink);border:1px solid var(--line);font:800 16px/1 var(--font-display);color:var(--plate);flex:none}
+.ex.done .ex-n{background:var(--good);border-color:var(--good);color:#06281a}
+.ex-head h2{font:700 17px/1.2 var(--font-body);flex:1;min-width:0}
+.demo{min-height:32px;padding:0 12px;border-radius:999px;border:1px solid var(--line);background:transparent;color:var(--mute);font:600 12px/1 var(--font-body);cursor:pointer}
+.tl{display:grid;gap:4px}
+.tl>div{display:flex;gap:10px;align-items:baseline}
+.tl dt{width:46px;flex:none;font:700 11px/1 var(--font-body);letter-spacing:.1em;text-transform:uppercase;color:var(--mute)}
+.tl dd{font:600 15px/1.3 var(--font-body)}
+.tl .tgt dd{color:var(--plate)}
+.ex-meta{font-size:13px;color:var(--mute)}
+.ex-note{font-size:13px;color:var(--chalk);opacity:.85;border-left:2px solid var(--line);padding-left:10px}
+.sets{display:grid;grid-template-columns:repeat(var(--n),1fr) 1.25fr;gap:8px}
+.setf{display:flex;flex-direction:column;gap:5px;min-width:0}
+.setf span{font:600 11px/1.1 var(--font-body);color:var(--mute);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.setf input{width:100%;min-height:50px;padding:0 6px;text-align:center;background:var(--ink);border:1px solid var(--line);border-radius:10px;font:700 20px/1 var(--font-body);color:var(--chalk)}
+.setf input.bad{border-color:var(--bad)}
+.setf input::placeholder{font:500 12px var(--font-body);color:var(--mute)}
+.fb{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.fb .chip{min-height:34px;padding:0 12px;font-size:13px}
+.rowstate{margin-left:auto;font:700 12px/1 var(--font-body);color:var(--good)}
+.dock{position:sticky;bottom:-28px;margin:0 -16px -28px;padding:12px 16px calc(14px + 0px);background:linear-gradient(to top,var(--ink) 72%,rgba(13,27,36,0));display:flex;flex-direction:column;gap:8px}
+.dock .row{font-size:14px;color:var(--mute)}
+
+.pips{display:grid;grid-template-columns:repeat(var(--n),1fr);gap:6px}
+.pip{height:10px;border-radius:99px;background:var(--ink);border:1px solid var(--line)}
+.pip.on{background:var(--good);border-color:var(--good)}
+.card.next .pill{color:var(--plate-ink);border-color:rgba(36,27,0,.5);font-weight:700}
+.day .trs{display:flex;flex-direction:column;gap:3px;width:100%;padding:0 3px}
+.day .tr{display:block;text-align:center;padding:4px 0;border-radius:6px;background:var(--good);color:#06281a;font:800 10px/1 var(--font-body);letter-spacing:.02em;white-space:nowrap;overflow:hidden}
+.day .tr.none{background:transparent}
+.day.trained{border-color:rgba(93,211,158,.65)}
+.day.today.trained{border-color:var(--plate)}
+.hy{padding:0;gap:0;overflow:hidden}
+.hy-row{display:flex;flex-direction:column;gap:6px;padding:12px 14px;border-top:1px solid var(--line)}
+.hy-row:first-child{border-top:0}
+.hy-row.done{background:rgba(93,211,158,.07)}
+.hy-main{display:flex;align-items:center;gap:10px}
+.hy-tag{flex:none;width:58px;text-align:center;padding:5px 0;border-radius:6px;border:1px solid var(--line);font:700 10px/1 var(--font-body);letter-spacing:.1em;color:var(--mute)}
+.hy-row.stn .hy-tag{background:var(--chalk);border-color:var(--chalk);color:var(--ink)}
+.hy-name{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.hy-name b{font:700 16px/1.2 var(--font-body)}
+.hy-name span{font-size:13px;color:var(--mute)}
+.hy-time{flex:none;width:92px}
+.hy-time input{width:100%;min-height:50px;text-align:center;background:var(--ink);border:1px solid var(--line);border-radius:10px;font:700 22px/1 var(--font-body);color:var(--chalk)}
+.hy-time input::placeholder{font:500 13px var(--font-body);color:var(--mute)}
+.hy-time input.bad{border-color:var(--bad)}
+.hy-time input.warn{border-color:var(--warn)}
+.hy-sub{font-size:13px;color:var(--mute);margin-left:68px}
+.hy-sub b{color:var(--plate);font-weight:700}
+.hy-note{margin-left:68px}
+.hy-sub2{display:flex;align-items:flex-end;gap:10px;margin-left:68px}
+.hy-load{display:flex;flex-direction:column;gap:5px;flex:1;min-width:0}
+.hy-load span{font:600 11px/1.1 var(--font-body);color:var(--mute);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hy-load input{width:100%;min-height:44px;padding:0 8px;text-align:center;background:var(--ink);border:1px solid var(--line);border-radius:10px;font:700 18px/1 var(--font-body);color:var(--chalk)}
+.hy-load input.bad{border-color:var(--bad)}
+.hy-row .err{margin-left:68px}
+.hy-warn{font-size:12px;color:var(--warn);margin-left:68px}
+.hy-warn:empty{display:none}
+
+/* chart */
+.chart{width:100%;height:auto;display:block}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th{font:700 11px/1 var(--font-body);letter-spacing:.1em;text-transform:uppercase;color:var(--mute);text-align:left;padding:0 0 8px}
+td{padding:9px 0;border-top:1px solid var(--line)}
+th:not(:first-child),td:not(:first-child){text-align:right}
+.up{color:var(--warn)} .down{color:var(--good)}
+
+.photos{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.photo{display:flex;flex-direction:column;gap:6px;font:600 12px/1 var(--font-body);color:var(--mute);cursor:pointer;text-align:center}
+.ph-box{display:grid;place-items:center;aspect-ratio:3/4;border-radius:12px;border:1px dashed var(--line);background:var(--ink) center/cover no-repeat;font:800 30px/1 var(--font-display);color:var(--mute)}
+.ph-box.has{border-style:solid;border-color:var(--good);color:transparent}
+
+/* sheet and toast */
+.scrim{position:absolute;inset:0;background:rgba(0,0,0,.6);z-index:20}
+.sheet{position:absolute;left:0;right:0;bottom:0;z-index:30;max-height:88%;overflow-y:auto;background:var(--panel);border-top:1px solid var(--line);border-radius:18px 18px 0 0;padding:18px 16px calc(18px + env(safe-area-inset-bottom));display:flex;flex-direction:column;gap:12px}
+.sum{display:flex;flex-direction:column;gap:2px;padding:10px 0;border-top:1px solid var(--line)}
+.sum b{font-size:15px}
+.sum .nx{color:var(--plate);font-weight:600;font-size:14px}
+.sum .why{font-size:13px;color:var(--mute)}
+.toast{position:absolute;left:50%;bottom:86px;transform:translateX(-50%);z-index:40;background:var(--chalk);color:var(--ink);padding:11px 16px;border-radius:12px;font:600 14px/1.3 var(--font-body);max-width:88%;text-align:center;box-shadow:0 8px 24px rgba(0,0,0,.4)}
+@media(prefers-reduced-motion:no-preference){.view{animation:in .18s ease-out}@keyframes in{from{opacity:.4;transform:translateY(4px)}to{opacity:1;transform:none}}}
+</style>
+</head>
+<body>
+<div class="app" id="app">
+  <header class="top">
+    <div class="brand"><span class="mark">TS</span><span class="brandname" id="brandName">TrainSmart Coaching</span></div>
+    <span class="pill" id="modePill">Sample data</span>
+  </header>
+  <main id="main">
+    <section class="view" id="view-home" hidden></section>
+    <section class="view" id="view-log" hidden></section>
+    <section class="view" id="view-train" hidden></section>
+    <section class="view" id="view-checkin" hidden></section>
+    <section class="view" id="view-progress" hidden></section>
+  </main>
+  <nav id="nav" aria-label="Main">
+    <a href="#home" data-tab="home"><svg viewBox="0 0 24 24"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/></svg>Home</a>
+    <a href="#log" data-tab="log"><svg viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13 7l4 4"/></svg>Log</a>
+    <a href="#train" data-tab="train"><svg viewBox="0 0 24 24"><path d="M3 9v6M6 6v12M18 6v12M21 9v6M6 12h12"/></svg>Train</a>
+    <a href="#checkin" data-tab="checkin"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8 12.5l2.7 2.7L16 9.5"/></svg>Check-in</a>
+    <a href="#progress" data-tab="progress"><svg viewBox="0 0 24 24"><path d="M4 19V5"/><path d="M4 19h16"/><path d="M7 14l4-4 3 3 5-6"/></svg>Progress</a>
+  </nav>
+  <div class="scrim" id="scrim" hidden></div>
+  <div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-label="Confirm" hidden></div>
+  <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+</div>
+
+<script>
+(function(){
+'use strict';
+
+/* ---------- helpers ---------- */
+var $=function(s,r){return (r||document).querySelector(s);};
+var $$=function(s,r){return Array.prototype.slice.call((r||document).querySelectorAll(s));};
+var esc=function(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});};
+var pad=function(n){return String(n).padStart(2,'0');};
+var iso=function(d){return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());};
+var addDays=function(d,n){var x=new Date(d);x.setDate(x.getDate()+n);return x;};
+var fromIso=function(s){var p=s.split('-').map(Number);return new Date(p[0],p[1]-1,p[2]);};
+var DAYS=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+var MONTHS=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+var dow=function(d){return (d.getDay()+6)%7;};
+var fmtDate=function(d){return DAYS[dow(d)]+' '+d.getDate()+' '+MONTHS[d.getMonth()];};
+var num=function(v){return (v===''||v==null||isNaN(Number(v)))?null:Number(v);};
+var fmt=function(n,dp){return Number(n).toLocaleString('en-GB',{minimumFractionDigits:dp||0,maximumFractionDigits:dp||0});};
+var signed=function(n,dp){var a=Math.abs(n).toFixed(dp==null?1:dp);return (n>0.0001?'+':n<-0.0001?'−':'')+a;};
+var avg=function(a){return a.reduce(function(x,y){return x+y;},0)/a.length;};
+
+/* ---------- config (one block per coach; this is what the white-label version swaps) ---------- */
+var CFG={brand:'TrainSmart Coaching',coach:'Ben',client:'Alex',cycles:8,perCycle:4,plannedPerWeek:4,checkInDay:6,photos:false,
+  /* Live connection. api is the coach's Apps Script web app. The client's private token comes from the link (?t=...).
+     previewToken is only for a private test build and must stay empty on the live site. With no api set, the app runs on sample data. */
+  api:'https://script.google.com/macros/s/AKfycbzG21iPsnpDsXR1DxxErbmbZCgV5JVmExoot0nPmQru3ahJdhUGQHFTMut_GG7rYmZbrA/exec',
+  previewToken:''};
+var LIVE=false,BOOT='demo',BOOTERR='',TOKEN='';
+var live={state:null,names:[],cur:null,key:''};
+$('#brandName').textContent=CFG.brand;
+
+/* Sample prescription: one daily set, as in the Setup tab. Cardio is a weekly goal, done on any days. */
+var TARGETS={kcal:2230,p:180,f:70,c:220,steps:8000,cardioWeek:60};
+
+/* ---------- dates ---------- */
+var today=new Date();today.setHours(0,0,0,0);
+var T=dow(today);
+var monday=addDays(today,-T);
+var startMonday=addDays(monday,-14);
+var todayIso=iso(today);
+function weekOf(d){return Math.floor(Math.round((d-startMonday)/864e5)/7)+1;}
+var THIS_WEEK=3;
+
+/* ---------- progression (demo rule: double progression; the real rule stays in your sheet) ---------- */
+function progress(ex,last){
+  var n=ex.sets;
+  var hitAll=last.reps.every(function(r){return r>=ex.hi;});
+  if(hitAll){
+    if(last.load==null){return {target:Array(n).fill(ex.hi),load:null,kind:'hold',why:'Top of the range on every set. '+CFG.coach+' may add load.'};}
+    return {target:Array(n).fill(ex.lo),load:last.load+ex.inc,kind:'load',why:'Hit '+ex.hi+' on every set. Load goes up '+ex.inc+' kg.'};
+  }
+  var missed=last.reps.filter(function(r,i){return r<last.target[i];}).length;
+  var target=last.target.map(function(t,i){return last.reps[i]>=t?Math.min(ex.hi,t+1):t;});
+  if(missed){return {target:target,load:last.load,kind:'repeat',why:'Missed '+missed+' set target'+(missed>1?'s':'')+'. Same load, go again.'};}
+  return {target:target,load:last.load,kind:'rep',why:'All targets hit. Add a rep where you can.'};
+}
+function mk(name,sets,lo,hi,inc,load,lastReps,extra){
+  extra=extra||{};
+  var o={name:name,sets:sets,lo:lo,hi:hi,inc:inc,rest:extra.rest||'90s',tempo:extra.tempo||'2-0-1',note:extra.note||'',
+         last:{reps:lastReps,load:load,target:Array(sets).fill(lo)}};
+  o.plan=progress(o,o.last);
+  return o;
+}
+/* ---------- timed sessions (Hyrox style): runs and stations, a time for each ---------- */
+function fmtT(n){n=Math.round(n);var m=Math.floor(n/60);return m+':'+pad(n-m*60);}
+function sT(n){return (n<0?'−':n>0?'+':'')+fmtT(Math.abs(n));}
+/* Times are typed as digits and shown as m:ss, like a stopwatch: 542 becomes 5:42. */
+function maskT(v){var dg=String(v).replace(/\D/g,'').replace(/^0+/,'').slice(0,4);if(!dg){return '';}var sec=dg.slice(-2);if(sec.length<2){sec='0'+sec;}return (dg.length>2?dg.slice(0,-2):'0')+':'+sec;}
+function parseT(v){var dg=String(v).replace(/\D/g,'').replace(/^0+/,'');if(!dg){return null;}var sec=parseInt(dg.slice(-2),10),min=dg.length>2?parseInt(dg.slice(0,-2),10):0;return {sec:sec,total:min*60+sec};}
+/* Demo rule: beat the target and the next target drops to the next 5 s below that time; miss it and the target stays. The real rule stays in your sheet. */
+function hyNext(sec,tgt){
+  if(sec<=tgt){var nt=Math.max(30,Math.floor((sec-5)/5)*5);return {tgt:nt,kind:'faster',why:(sec<tgt?'Beat the target by '+fmtT(tgt-sec)+'.':'Hit the target.')+' Next target '+fmtT(nt)+'.'};}
+  return {tgt:tgt,kind:'hold',why:'Over target by '+fmtT(sec-tgt)+'. Next target stays '+fmtT(tgt)+'.'};
+}
+function hs(kind,name,dist,loadKg,lastSec,lastTgt,extra){
+  extra=extra||{};
+  var o={kind:kind,name:name,dist:dist,loadKg:loadKg,loadLabel:extra.loadLabel||'Load, kg',note:extra.note||'',last:{sec:lastSec,tgt:lastTgt,load:loadKg}};
+  var p=hyNext(lastSec,lastTgt);p.load=loadKg;o.plan=p;
+  return o;
+}
+var SESSIONS=[
+ {name:'Push',ex:[
+  mk('Incline Dumbbell Press',3,8,10,2,24,[9,8,8],{rest:'2m',tempo:'3-0-1',note:'Shoulder blades pinned to the bench.'}),
+  mk('Dumbbell Shoulder Press',3,8,10,2,18,[9,9,8],{rest:'2m',tempo:'2-0-1'}),
+  mk('Cable Chest Fly',3,12,15,2.5,12.5,[13,12,12],{rest:'60s',tempo:'2-1-2'}),
+  mk('Cable Lateral Raise',3,12,15,1,7,[13,12,12],{rest:'60s',tempo:'2-0-2'}),
+  mk('Rope Triceps Pushdown',3,10,12,2.5,25,[12,12,12],{rest:'60s',tempo:'2-0-1'})]},
+ {name:'Pull',ex:[
+  mk('Chest-Supported Row',3,8,10,2.5,45,[8,8,8],{rest:'2m',tempo:'2-1-1',note:'Pause for a second at the top.'}),
+  mk('Lat Pulldown',3,10,12,2.5,52.5,[11,10,10],{rest:'90s',tempo:'2-0-2'}),
+  mk('Seated Cable Row',3,10,12,2.5,50,[11,11,10],{rest:'90s',tempo:'2-1-1'}),
+  mk('Chin-Up',3,6,8,0,null,[7,6,6],{rest:'2m',tempo:'2-0-2',note:'Bodyweight. Leave the load blank.'}),
+  mk('EZ-Bar Curl',3,10,12,2.5,27.5,[11,10,10],{rest:'60s',tempo:'2-0-2'})]},
+ {name:'Legs',ex:[
+  mk('Back Squat',3,6,8,2.5,80,[7,6,6],{rest:'3m',tempo:'3-0-1',note:'Hit depth before adding load.'}),
+  mk('Romanian Deadlift',3,8,10,5,90,[9,9,8],{rest:'2m',tempo:'3-0-1'}),
+  mk('Leg Press',3,10,12,5,140,[11,11,10],{rest:'2m',tempo:'2-0-1',note:'Feet mid-platform.'}),
+  mk('Lying Leg Curl',3,10,12,2.5,35,[10,10,10],{rest:'90s',tempo:'2-1-1'}),
+  mk('Standing Calf Raise',3,12,15,5,60,[14,13,12],{rest:'60s',tempo:'2-1-2'})]},
+ {name:'Hyrox Sim',short:'Hyrox',type:'hyrox',format:'Half race simulation',
+  blurb:'Four 1 km runs, each followed by a station, in race order. Go straight from the station into the next run and time every split.',
+  seg:[
+   hs('run','Run 1','1 km',null,324,330,{note:'Start at a pace you can repeat on all four runs.'}),
+   hs('stn','SkiErg','1000 m',null,271,270,{note:'Drive from the hips, then pull. Do not arm it.'}),
+   hs('run','Run 2','1 km',null,333,340),
+   hs('stn','Sled Push','4 × 12.5 m',120,161,165,{note:'Low hips, short quick steps, no stopping.',loadLabel:'Sled load, kg incl. sled'}),
+   hs('run','Run 3','1 km',null,341,345),
+   hs('stn','Sled Pull','4 × 12.5 m',90,202,200,{note:'Hand over hand. Sit back and stay low.',loadLabel:'Sled load, kg incl. sled'}),
+   hs('run','Run 4','1 km',null,352,350),
+   hs('stn','Burpee Broad Jump','80 m',null,318,320,{note:'Chest to the floor, then jump for distance.'})]}
+];
+var SEED_NOTES=['4 of 5 progressed','3 of 5 progressed','5 of 5 progressed','2 of 5 progressed'];
+
+/* ---------- state ---------- */
+var state={weights:{},logs:{},history:[],photos:{},checkin:{sent:null,note:''}};
+var W1=[84.7,84.5,84.9,84.4,84.6,84.2,84.5];
+var W2=[84.1,84.0,84.3,null,84.0,83.7,83.9];
+var W3=[83.6,83.5,null,83.4,83.5,83.3,83.4];
+[[W1,-14],[W2,-7],[W3,0]].forEach(function(p){p[0].forEach(function(kg,i){
+  var d=addDays(monday,p[1]+i);
+  if(kg!=null&&d<today){state.weights[iso(d)]=kg;}
+});});
+for(var i=0;i<T;i++){
+  if(i===2){continue;}
+  var tg=TARGETS;
+  state.logs[iso(addDays(monday,i))]={w:W3[i],steps:7600+i*410,p:tg.p-8+i*2,f:tg.f-2,c:tg.c-15+i*4,kcal:tg.kcal-60+i*18,fluid:2.6,hunger:5,crave:4,off:false,cardio:i===5?210:0,sore:4,energy:7,stress:4,sleep:7.25,sleepq:7,notes:''};
+}
+var order=0;
+function seedSession(d){
+  var ss=SESSIONS[order%CFG.perCycle],h={date:iso(d),name:ss.name,note:SEED_NOTES[order%SEED_NOTES.length]};
+  if(ss.type==='hyrox'){
+    h.type='hyrox';h.total=ss.seg.reduce(function(a,g){return a+g.last.sec;},0);
+    h.splits=ss.seg.map(function(g){return {name:g.name,sec:g.last.sec};});h.note='Total '+fmtT(h.total);
+  }
+  state.history.push(h);order++;
+}
+[1,3,5,6].forEach(function(i){seedSession(addDays(monday,-14+i));});  /* week 1: all four, any days */
+[0,2,4].forEach(function(i){seedSession(addDays(monday,-7+i));});     /* week 2: three of four, the Hyrox session carries over */
+var completed=order;
+var TOTAL=CFG.cycles*CFG.perCycle;
+var train={inputs:{}};
+var drafts={};
+var logDate=todayIso;
+var logSaved=null;
+var warnShown=false;
+
+function curSession(){return LIVE?live.cur:SESSIONS[completed%CFG.perCycle];}
+function cycleNo(){return LIVE?live.state.cycle:Math.floor(completed/CFG.perCycle)+1;}
+function sessNo(){return LIVE?live.state.session:completed%CFG.perCycle+1;}
+function finished(){return LIVE?live.state.status!=='ACTIVE':completed>=TOTAL;}
+function nextName(){return LIVE?(live.names[live.state.session%live.state.perCycle]||''):SESSIONS[(completed+1)%CFG.perCycle].name;}
+function lastOfBlock(){return LIVE?(live.state.cycle>=live.state.totalCycles&&live.state.session>=live.state.perCycle):completed+1>=TOTAL;}
+function finishedCard(){
+  if(LIVE&&live.state.status==='EMPTY'){return '<div class="card next"><div class="eyebrow">Programme</div><div class="h1">Nothing loaded yet</div><div class="meta">'+esc(CFG.coach)+' has not set up your programme yet. It will appear here as soon as it is ready.</div></div>';}
+  return '<div class="card next"><div class="eyebrow">Programme</div><div class="h1">Block complete</div><div class="meta">All '+CFG.cycles+' cycles done. '+esc(CFG.coach)+' will set your next block.</div></div>';
+}
+function weeklyRows(){
+  var map={};
+  Object.keys(state.weights).forEach(function(k){var w=weekOf(fromIso(k));(map[w]=map[w]||[]).push(state.weights[k]);});
+  var prev=null;
+  return Object.keys(map).map(Number).sort(function(a,b){return a-b;}).map(function(w){
+    var a=avg(map[w]);var row={week:w,avg:a,change:prev==null?null:a-prev,logged:map[w].length};prev=a;return row;});
+}
+function thisWeekLogs(){
+  var out=[];for(var i=0;i<7;i++){var k=iso(addDays(monday,i));if(state.logs[k]){out.push({i:i,k:k,e:state.logs[k]});}}return out;
+}
+function sessionsThisWeek(){return state.history.filter(function(h){return weekOf(fromIso(h.date))===THIS_WEEK;}).length;}
+function carriedOver(){
+  var done=sessionsThisWeek();
+  var owed=Math.max(0,(THIS_WEEK-1)*CFG.plannedPerWeek-(completed-done));
+  return Math.max(0,owed-done);
+}
+function sessionOn(d){var h=state.history.filter(function(x){return x.date===d;});return h.length?h[h.length-1].name:null;}
+function isHy(x){return !!x&&x.type==='hyrox';}
+function shortOf(name){var x=SESSIONS.filter(function(q){return q.name===name;})[0];return x?(x.short||x.name):name;}
+function wkCount(){return Math.min(sessionsThisWeek(),CFG.plannedPerWeek)+' of '+CFG.plannedPerWeek+' this week';}
+function sessMeta(x){
+  if(isHy(x)){var runs=x.seg.filter(function(g){return g.kind==='run';}).length;return runs+' runs, '+(x.seg.length-runs)+' stations · target '+fmtT(x.seg.reduce(function(a,g){return a+g.plan.tgt;},0));}
+  return x.ex.length+' exercises, '+x.ex.reduce(function(a,e){return a+e.sets;},0)+' sets';
+}
+function fmtPlan(reps,load){return reps.join(' / ')+(load==null?' · bodyweight':' @ '+Number(load).toFixed(1)+' kg');}
+
+/* ---------- toast + sheet ---------- */
+var toastTimer=null;
+function toast(msg){var t=$('#toast');t.textContent=msg;t.hidden=false;clearTimeout(toastTimer);toastTimer=setTimeout(function(){t.hidden=true;},2600);}
+function openSheet(html){$('#sheet').innerHTML=html;$('#sheet').hidden=false;$('#scrim').hidden=false;}
+function closeSheet(){$('#sheet').hidden=true;$('#scrim').hidden=true;}
+$('#scrim').addEventListener('click',closeSheet);
+
+/* ---------- live connection to the coach's sheet ---------- */
+function previewBanner(){return LIVE?'<div class="banner warn"><div><b>Preview only.</b> This screen is not connected to your sheet yet, so nothing here is saved.</div></div>':'';}
+function nice(v){return String(v||'').toLowerCase().replace(/(^|\s)(\S)/g,function(m,a,b){return a+b.toUpperCase();});}
+function dateOf(v){var d=new Date(v);return isNaN(d.getTime())?todayIso:iso(d);}
+function getToken(){
+  var t='';
+  try{t=new URLSearchParams(location.search).get('t')||'';}catch(e){}
+  if(t){try{localStorage.setItem('ts_token',t);}catch(e){}return t;}
+  try{t=localStorage.getItem('ts_token')||'';}catch(e){}
+  return t||CFG.previewToken||'';
+}
+function apiCall(req,ms){
+  var ctl=window.AbortController?new AbortController():null;
+  var timer=setTimeout(function(){if(ctl){ctl.abort();}},ms||25000);
+  var init={},url=CFG.api;
+  if(ctl){init.signal=ctl.signal;}
+  if(req.action==='home'||req.action==='session'||req.action==='history'){
+    url+='?action='+encodeURIComponent(req.action)+'&token='+encodeURIComponent(req.token);
+  }else{
+    init.method='POST';init.headers={'Content-Type':'text/plain;charset=utf-8'};init.body=JSON.stringify(req);
+  }
+  return fetch(url,init).then(function(r){return r.text();}).then(function(t){
+    clearTimeout(timer);
+    try{return JSON.parse(t);}catch(e){throw new Error('The sheet sent back something unexpected.');}
+  },function(err){
+    clearTimeout(timer);
+    var x=new Error(err&&err.name==='AbortError'?'The sheet took too long to answer.':'Could not reach the sheet. Check your connection and try again.');
+    x.network=true;throw x;
+  });
+}
+function api(action,extra,ms){
+  var req=Object.assign({action:action,token:TOKEN},extra||{});
+  return apiCall(req,ms).then(function(j){
+    if(!j||!j.ok){var e=new Error((j&&j.message)||'Something went wrong.');e.code=j&&j.error;throw e;}
+    return j;
+  });
+}
+function noteFor(exs){var n=(exs||[]).length,p=(exs||[]).filter(function(e){return /^PROGRESS/.test(String(e.outcome||''));}).length;return p+' of '+n+' progressed';}
+function liveEx(e){
+  return {order:e.order,name:e.name,sets:e.sets,lo:e.repLow,hi:e.repHigh,inc:e.increment,rest:e.rest||'',tempo:'',note:e.notes||'',
+    live:true,lastText:e.lastText||'',last:{reps:[],load:null,target:[]},
+    plan:{target:(e.targetReps||[]).slice(),load:e.targetLoad==null?null:Number(e.targetLoad),kind:'',why:''}};
+}
+function applyLive(home,sess,hist){
+  var st=sess.state||home.state;
+  live.state=st;
+  live.names=(home.sessionNames||[]).map(nice);
+  CFG.client=String((home.client&&home.client.name)||'').trim().split(/\s+/)[0]||'there';
+  CFG.cycles=st.totalCycles||CFG.cycles;CFG.perCycle=st.perCycle||CFG.perCycle;CFG.plannedPerWeek=CFG.perCycle;
+  completed=st.completedSessions||0;TOTAL=(st.totalCycles||0)*(st.perCycle||0);
+  state.history=((hist&&hist.sessions)||[]).slice().reverse().map(function(h){
+    return {date:dateOf(h.date),name:nice(h.name),note:noteFor(h.exercises),cycle:h.cycle,session:h.session,exercises:h.exercises||[]};
+  });
+  var base=state.history.length?fromIso(state.history[0].date):today;
+  if(base>today){base=today;}
+  startMonday=addDays(base,-dow(base));THIS_WEEK=weekOf(today);
+  var key=st.status==='ACTIVE'?st.cycle+'-'+st.session:'';
+  live.cur=sess.session?{name:nice(sess.session.name),live:true,ex:(sess.session.exercises||[]).map(liveEx)}:null;
+  if(key!==live.key){train.inputs={};live.key=key;}
+}
+function fetchLive(){
+  return Promise.all([api('home'),api('session'),api('history')]).then(function(r){applyLive(r[0],r[1],r[2]);});
+}
+function setPill(){var p=$('#modePill');if(!p){return;}if(LIVE){p.textContent='Live';p.className='pill good';}else{p.textContent='Sample data';p.className='pill';}}
+function startLive(){
+  BOOT='loading';BOOTERR='';route();
+  return fetchLive().then(function(){
+    LIVE=true;BOOT='live';state.weights={};state.logs={};drafts={};state.checkin={sent:null,note:''};setPill();route();
+  },function(e){BOOT='error';BOOTERR=(e&&e.message)||'Could not load your programme.';route();});
+}
+function bootHtml(){
+  if(BOOT==='loading'){return '<div class="card next"><div class="eyebrow">One moment</div><div class="h1">Loading your programme</div><div class="meta">Getting the latest from your coach’s sheet…</div></div>';}
+  return '<div class="card next"><div class="eyebrow">Connection</div><div class="h1">Could not load</div><div class="meta">'+esc(BOOTERR)+'</div><button class="btn primary block" type="button" id="bootretry">Try again</button>'+
+    (CFG.previewToken?'<button class="btn ghost block" type="button" id="bootdemo">Look at sample data instead</button>':'')+'</div>';
+}
+function wireBoot(){
+  var r=$('#bootretry');if(r){r.addEventListener('click',startLive);}
+  var d=$('#bootdemo');if(d){d.addEventListener('click',function(){BOOT='demo';LIVE=false;setPill();route();});}
+}
+function sheetError(e,retry){
+  var stale=e&&e.code==='stale';
+  openSheet('<div class="h2">'+(stale?'Your session has changed':'That did not go through')+'</div><div class="meta">'+esc((e&&e.message)||'Something went wrong.')+(e&&e.network?' Your numbers are still on screen, nothing has been lost.':'')+'</div>'+
+    (stale?'<button class="btn primary block" type="button" id="reloadlive">Reload</button>':'<button class="btn primary block" type="button" id="retry">Try again</button>')+
+    '<button class="btn ghost block" type="button" id="backto">Back to session</button>');
+  $('#backto').addEventListener('click',closeSheet);
+  var r=$('#retry');if(r){r.addEventListener('click',retry);}
+  var rl=$('#reloadlive');if(rl){rl.addEventListener('click',function(){closeSheet();train.inputs={};live.key='';startLive();});}
+}
+function entriesNow(){
+  return curSession().ex.map(function(ex,i){var d=inp(i);return {order:ex.order,name:ex.name,reps:d.reps.map(Number),load:d.load===''?null:Number(d.load)};});
+}
+function openLiveSummary(){
+  var s=curSession(),entries=entriesNow();
+  openSheet('<div class="h2">Checking '+esc(s.name)+'</div><div class="meta">Working out your next targets…</div>');
+  api('preview',{entries:entries},30000).then(function(j){
+    var rows=(j.results||[]).map(function(r,i){
+      var d=entries[i]||{reps:[],load:null};
+      return '<div class="sum"><b>'+esc(r.name)+'</b><span>Done '+fmtPlan(d.reps,d.load)+'</span><span class="nx">Next: '+fmtPlan((r.nextReps||[]).slice(0,r.nextSets),r.nextLoad)+'</span><span class="why">'+esc(r.feedback||r.outcome||'')+'</span></div>';
+    }).join('');
+    var nn=nextName();
+    openSheet('<div class="h2">Log '+esc(s.name)+'?</div><div class="meta">This saves the session to your sheet and sets your next targets. '+(lastOfBlock()?'That finishes your block.':(nn?'Next up: '+esc(nn)+'.':''))+'</div>'+rows+
+      '<button class="btn primary block" type="button" id="confirmdone">Log session and load next</button><button class="btn ghost block" type="button" id="backto">Back to session</button>');
+    $('#backto').addEventListener('click',closeSheet);
+    $('#confirmdone').addEventListener('click',function(ev){commitLive(ev.currentTarget);});
+  },function(e){sheetError(e,openLiveSummary);});
+}
+function commitLive(btn){
+  if(live.busy){return;}
+  live.busy=true;
+  if(btn){btn.disabled=true;btn.textContent='Saving to your sheet…';}
+  var s=curSession(),name=s.name,cy=live.state.cycle,se=live.state.session,entries=entriesNow();
+  api('complete',{cycle:cy,session:se,entries:entries},60000).then(function(){
+    train.inputs={};
+    return fetchLive().then(function(){
+      live.busy=false;closeSheet();
+      toast(name+' logged ('+wkCount()+')'+(finished()?'. Block complete.':'. '+curSession().name+' is loaded.'));
+      route();$('#main').scrollTop=0;
+    },function(){
+      live.busy=false;closeSheet();BOOT='error';BOOTERR='Your session was saved. The next one could not be loaded yet.';route();
+    });
+  },function(e){live.busy=false;sheetError(e,function(){commitLive(null);});});
+}
+
+/* ---------- HOME ---------- */
+function renderHome(){
+  var v=$('#view-home');
+  var hr=new Date().getHours();
+  var greet=hr<12?'Morning':hr<18?'Afternoon':'Evening';
+  var tg=TARGETS, todayLog=state.logs[todayIso];
+  var days='';
+  for(var i=0;i<7;i++){
+    var dd=addDays(monday,i), k=iso(dd), cls='day';
+    var ss=state.history.filter(function(h){return h.date===k;}).map(function(h){return '<span class="tr" title="'+esc(h.name)+'">'+esc(shortOf(h.name))+'</span>';}).join('');
+    if(state.logs[k]){cls+=' done';}else if(i<T&&!LIVE){cls+=' missed';}
+    if(ss){cls+=' trained';}
+    if(i===T){cls+=' today';}
+    days+='<div class="'+cls+'"><span>'+DAYS[i]+'</span><b>'+dd.getDate()+'</b><div class="trs">'+(ss||'<span class="tr none">&nbsp;</span>')+'</div><i class="dot"></i></div>';
+  }
+  var logged=thisWeekLogs().length;
+  var s=curSession(), done=sessionsThisWeek(), car=carriedOver();
+  var nextCard;
+  if(finished()){
+    nextCard=finishedCard();
+  }else{
+    nextCard='<div class="card next"><div class="eyebrow">Next session</div><div class="h1">'+esc(s.name)+'</div>'+
+      (car>0?'<div><span class="pill">'+car+' carried over from last week</span></div>':'')+
+      '<div class="meta">Cycle '+cycleNo()+' of '+CFG.cycles+' · Session '+sessNo()+' of '+CFG.perCycle+' · '+sessMeta(s)+'</div>'+
+      '<div class="meta">'+completed+' of '+TOTAL+' sessions completed. Do it on whichever day suits you.</div>'+
+      '<button class="btn dark block" type="button" data-go="train">Open session</button></div>';
+  }
+  var pips='';for(var p=0;p<CFG.plannedPerWeek;p++){pips+='<i class="pip'+(p<done?' on':'')+'"></i>';}
+  var weekBlock='<div class="card"><div class="row"><div class="h2" style="font-size:22px">Sessions this week</div><span class="num" style="font-size:28px">'+Math.min(done,CFG.plannedPerWeek)+'<small>of '+CFG.plannedPerWeek+'</small></span></div>'+
+    '<div class="pips" style="--n:'+CFG.plannedPerWeek+'">'+pips+'</div>'+
+    '<div class="meta">Train on any days you like. If you miss one, it carries over and stays next in line.</div>'+
+    '<div class="week">'+days+'</div><div class="hint" style="font-size:12px">Green block: the session you trained that day.'+(LIVE?'':' Dot: day logged.')+'</div></div>';
+  var tiles=[
+    ['Calories',fmt(tg.kcal),'kcal',todayLog?fmt(todayLog.kcal)+' logged':'',1],
+    ['Protein',tg.p,'g',todayLog?todayLog.p+' logged':'',1],
+    ['Carbs',tg.c,'g',todayLog?todayLog.c+' logged':'',1],
+    ['Fats',tg.f,'g',todayLog?todayLog.f+' logged':'',1],
+    ['Steps',fmt(tg.steps),'',todayLog?fmt(todayLog.steps)+' logged':'',1],
+    ['Cardio',tg.cardioWeek,'min / wk','any days',0]
+  ].map(function(t){return '<div class="tile"><div class="eyebrow">'+t[0]+'</div><div class="num">'+t[1]+'<small>'+t[2]+'</small></div><div class="sub'+(t[3]&&t[4]?' ok':'')+'">'+(t[3]||'&nbsp;')+'</div></div>';}).join('');
+  var logCard=todayLog
+    ? '<div class="banner ok"><div><b>Today is logged.</b> Nice one. You can still update it on the Log tab.</div></div>'
+    : '<div class="card"><div class="row"><div><div class="h2">Log today</div><div class="meta">Weight, food, steps, sleep. About a minute.</div></div></div><button class="btn primary block" type="button" data-go="log">Log my day</button></div>';
+  var ci=state.checkin.sent
+    ? '<div class="banner ok"><div><b>Check-in sent.</b> '+esc(CFG.coach)+' will review it.</div></div>'
+    : '<div class="card"><div class="row"><div class="h2">Weekly check-in</div><span class="pill'+(T===CFG.checkInDay?' warn':'')+'">'+(T===CFG.checkInDay?'Due today':'Due Sunday')+'</span></div>'+
+      '<div class="meta">'+logged+' of 7 days logged this week</div><div class="bar"><i style="width:'+Math.round(logged/7*100)+'%"></i></div>'+
+      '<button class="btn ghost block" type="button" data-go="checkin">Open check-in</button></div>';
+  v.innerHTML=
+    '<div><div class="eyebrow">'+fmtDate(today)+' · Week '+THIS_WEEK+'</div><div class="h1" style="margin-top:8px;font-size:38px">Good '+greet.toLowerCase()+',<br>'+esc(CFG.client)+'</div></div>'+
+    nextCard+weekBlock+
+    (LIVE?'':'<div class="stack"><div class="eyebrow">Daily targets</div><div class="tiles">'+tiles+'</div></div>'+logCard+ci);
+}
+
+/* ---------- LOG ---------- */
+var NUM_FIELDS=[
+ {k:'w',label:'Bodyweight',unit:'kg',step:'0.1',min:30,max:250,req:1},
+ {k:'steps',label:'Steps',unit:'',step:'1',min:0,max:60000,req:1},
+ {k:'p',label:'Protein',unit:'g',step:'1',min:0,max:600,req:1},
+ {k:'f',label:'Fats',unit:'g',step:'1',min:0,max:400,req:1},
+ {k:'c',label:'Carbs',unit:'g',step:'1',min:0,max:1000,req:1},
+ {k:'kcal',label:'Calories',unit:'kcal',step:'1',min:0,max:10000,req:1},
+ {k:'fluid',label:'Fluid intake',unit:'litres',step:'0.1',min:0,max:12},
+ {k:'cardio',label:'Cardio',unit:'kcal burned',step:'1',min:0,max:3000},
+ {k:'sleep',label:'Sleep duration',unit:'hours',step:'0.25',min:0,max:16}
+];
+var SCALES=[['hunger','Hunger','Not hungry','Starving'],['crave','Cravings','None','Intense'],['sore','Muscle soreness','None','Very sore'],['energy','Energy','Flat','Great'],['stress','Stress','Calm','Maxed'],['sleepq','Quality of sleep','Poor','Great']];
+function entryFor(d){return drafts[d]||state.logs[d]||{};}
+function draftFor(d){if(!drafts[d]){drafts[d]=Object.assign({},state.logs[d]||{});}return drafts[d];}
+function numField(f,val){
+  return '<label class="field"><span class="fl">'+f.label+(f.req?'':' <i>optional</i>')+'</span><span class="inwrap"><input id="f-'+f.k+'" data-k="'+f.k+'" type="number" inputmode="decimal" step="'+f.step+'" value="'+(val==null?'':esc(val))+'"><em>'+f.unit+'</em></span><span class="ferr" id="e-'+f.k+'"></span></label>';
+}
+function macroHint(e){
+  if(e.p==null||e.f==null||e.c==null){return '';}
+  return 'Your macros add up to about '+fmt(e.p*4+e.c*4+e.f*9)+' kcal.';
+}
+function renderLog(){
+  var v=$('#view-log');
+  var e=entryFor(logDate);
+  var yIso=iso(addDays(today,-1));
+  var custom=logDate!==todayIso&&logDate!==yIso;
+  var sess=sessionOn(logDate);
+  var fields={};NUM_FIELDS.forEach(function(f){fields[f.k]=numField(f,e[f.k]);});
+  var scales=SCALES.map(function(s){
+    var btns='';for(var n=1;n<=10;n++){btns+='<button type="button" data-scale="'+s[0]+'" data-val="'+n+'" class="'+(e[s[0]]===n?'on':'')+'" aria-label="'+s[1]+' '+n+'">'+n+'</button>';}
+    return '<div class="field"><span class="fl">'+s[1]+' <i>optional</i></span><div class="scale">'+btns+'</div><div class="scale-ends"><span>'+s[2]+'</span><span>'+s[3]+'</span></div></div>';
+  }).join('');
+  var saved=logSaved===logDate
+    ? '<div class="banner ok"><div><b>Saved for '+fmtDate(fromIso(logDate))+'.</b> '+(LIVE?'Preview only, so it has not gone to the sheet.':'Nice one. It is on '+esc(CFG.coach)+'’s sheet now.')+'</div></div>' : '';
+  v.innerHTML=
+    '<div><div class="eyebrow">Log my day</div><div class="h1" style="margin-top:8px">'+(logDate===todayIso?'Today':fmtDate(fromIso(logDate)))+'</div></div>'+
+    previewBanner()+saved+
+    '<div class="chips" id="datechips"><button class="chip'+(logDate===todayIso?' on':'')+'" type="button" data-date="'+todayIso+'">Today</button><button class="chip'+(logDate===yIso?' on':'')+'" type="button" data-date="'+yIso+'">Yesterday</button>'+
+    '<span class="date"><input id="pickdate" type="date" min="'+iso(LIVE?addDays(today,-14):startMonday)+'" max="'+todayIso+'" value="'+(custom?logDate:'')+'" aria-label="Pick another date"></span></div>'+
+    '<div class="card"><div class="eyebrow">Body and food</div><div class="fgrid">'+fields.w+fields.steps+fields.p+fields.f+fields.c+fields.kcal+'<div class="field wide"><span class="hint" id="macrohint">'+macroHint(e)+'</span></div>'+fields.fluid+'</div></div>'+
+    '<div class="card"><div class="eyebrow">Training and cardio</div><div class="row"><span class="fl">Session</span><span class="pill'+(sess?' good':'')+'">'+(sess?esc(sess)+' · from Train':'None logged')+'</span></div><div class="fgrid">'+fields.cardio+'</div></div>'+
+    '<div class="card"><div class="eyebrow">How you felt</div>'+scales+'<div class="fgrid">'+fields.sleep+'</div></div>'+
+    '<div class="card"><div class="eyebrow">Off plan?</div><div class="toggle"><button type="button" class="chip'+(e.off===false?' on':'')+'" data-off="0">No</button><button type="button" class="chip'+(e.off===true?' on':'')+'" data-off="1">Yes, had something</button></div>'+
+    '<label class="field"><span class="fl">Anything relevant? Slip-ups and why <i>optional</i></span><textarea id="f-notes" data-k="notes">'+esc(e.notes||'')+'</textarea></label></div>'+
+    '<div id="warnbox"></div>'+
+    '<button class="btn primary block" type="button" id="savelog">'+(state.logs[logDate]?'Update my day':'Save my day')+'</button>';
+  wireLog();
+}
+function setFieldErr(k,msg){var el=$('#e-'+k),inp=$('#f-'+k);if(el){el.textContent=msg||'';}if(inp){inp.classList.toggle('bad',!!msg);}}
+function validateLog(e){
+  var errs={},warns=[];
+  NUM_FIELDS.forEach(function(f){
+    var val=e[f.k];
+    if(val==null||val===''){if(f.req){errs[f.k]='Required.';}return;}
+    if(val<f.min||val>f.max){errs[f.k]='Enter a number from '+f.min+' to '+f.max+'.';}
+  });
+  if(!errs.w&&e.w!=null){
+    var prior=Object.keys(state.weights).filter(function(k){return k<logDate;}).sort().slice(-7).map(function(k){return state.weights[k];});
+    if(prior.length>=3){var a=avg(prior);if(Math.abs(e.w-a)>2){warns.push('Bodyweight '+e.w+' kg is '+Math.abs(e.w-a).toFixed(1)+' kg away from your recent average of '+a.toFixed(1)+' kg. Check the number.');}}
+  }
+  if(!errs.kcal&&!errs.p&&!errs.f&&!errs.c&&e.kcal!=null&&e.p!=null&&e.f!=null&&e.c!=null){
+    var est=e.p*4+e.c*4+e.f*9;if(est>0&&Math.abs(e.kcal-est)>0.15*est){warns.push('Calories ('+fmt(e.kcal)+') and macros (about '+fmt(est)+' kcal) differ by more than 15%.');}
+  }
+  return {errs:errs,warns:warns};
+}
+function commitLog(e){
+  var out=Object.assign({},e);
+  state.logs[logDate]=out;state.weights[logDate]=out.w;
+  delete drafts[logDate];logSaved=logDate;warnShown=false;
+  toast(LIVE?'Saved in preview only':'Day saved');renderLog();$('#main').scrollTop=0;
+}
+function wireLog(){
+  var v=$('#view-log');
+  $$('#datechips [data-date]',v).forEach(function(b){b.addEventListener('click',function(){logDate=b.dataset.date;logSaved=null;warnShown=false;renderLog();});});
+  $('#pickdate').addEventListener('change',function(ev){if(ev.target.value){logDate=ev.target.value;logSaved=null;warnShown=false;renderLog();}});
+  $$('input[data-k]',v).forEach(function(inp){inp.addEventListener('input',function(){
+    var d=draftFor(logDate);d[inp.dataset.k]=num(inp.value);setFieldErr(inp.dataset.k,'');warnShown=false;$('#warnbox').innerHTML='';
+    if(['p','f','c'].indexOf(inp.dataset.k)>-1){$('#macrohint').textContent=macroHint(d);}
+  });});
+  $('#f-notes').addEventListener('input',function(ev){draftFor(logDate).notes=ev.target.value;});
+  $$('[data-scale]',v).forEach(function(b){b.addEventListener('click',function(){
+    var d=draftFor(logDate),k=b.dataset.scale,val=Number(b.dataset.val);d[k]=d[k]===val?null:val;
+    $$('[data-scale="'+k+'"]',v).forEach(function(x){x.classList.toggle('on',Number(x.dataset.val)===d[k]);});
+  });});
+  $$('[data-off]',v).forEach(function(b){b.addEventListener('click',function(){
+    var d=draftFor(logDate);d.off=b.dataset.off==='1';
+    $$('[data-off]',v).forEach(function(x){x.classList.toggle('on',(x.dataset.off==='1')===d.off);});
+  });});
+  $('#savelog').addEventListener('click',function(){
+    var e=draftFor(logDate);
+    var r=validateLog(e),keys=Object.keys(r.errs);
+    NUM_FIELDS.forEach(function(f){setFieldErr(f.k,r.errs[f.k]);});
+    if(keys.length){$('#warnbox').innerHTML='<div class="banner warn"><div><b>Check the highlighted fields.</b></div></div>';var el=$('#f-'+keys[0]);if(el){el.scrollIntoView({block:'center',behavior:'smooth'});el.focus({preventScroll:true});}return;}
+    if(r.warns.length&&!warnShown){
+      warnShown=true;
+      $('#warnbox').innerHTML='<div class="banner warn"><div><b>Worth a second look</b><ul>'+r.warns.map(function(w){return '<li>'+esc(w)+'</li>';}).join('')+'</ul><div class="row" style="margin-top:12px;justify-content:flex-start"><button class="btn ghost" type="button" id="fixit">Fix numbers</button><button class="btn primary" type="button" id="forcesave">Save anyway</button></div></div></div>';
+      $('#fixit').addEventListener('click',function(){warnShown=false;$('#warnbox').innerHTML='';$('#f-w').focus();});
+      $('#forcesave').addEventListener('click',function(){commitLog(draftFor(logDate));});
+      $('#warnbox').scrollIntoView({block:'center',behavior:'smooth'});
+      return;
+    }
+    commitLog(e);
+  });
+}
+
+/* ---------- TRAIN ---------- */
+function inp(i){
+  var ex=curSession().ex[i];
+  if(!train.inputs[i]){train.inputs[i]={reps:Array(ex.sets).fill(''),load:ex.plan.load==null?'':String(ex.plan.load),fb:''};}
+  return train.inputs[i];
+}
+function maxReps(ex){return Math.max(50,2*Math.max.apply(null,ex.plan.target));}
+function rowState(i){
+  var ex=curSession().ex[i],d=inp(i),max=maxReps(ex),invalid=null,complete=true;
+  d.reps.forEach(function(r,k){
+    if(r===''){complete=false;return;}
+    var n=Number(r);
+    if(isNaN(n)||n<0||n>max||Math.floor(n)!==n){invalid='Reps must be a whole number from 0 to '+max+'.';complete=false;}
+  });
+  if(d.load===''){if(ex.plan.load!=null&&ex.plan.load>0){complete=false;}}
+  else if(isNaN(Number(d.load))||Number(d.load)<0){invalid=invalid||'Load must be 0 or more.';complete=false;}
+  return {complete:complete,invalid:invalid};
+}
+function exCard(ex,i){
+  var d=inp(i),max=maxReps(ex);
+  var sets=d.reps.map(function(r,k){
+    return '<label class="setf"><span>Set '+(k+1)+' · aim '+ex.plan.target[k]+'</span><input type="number" inputmode="numeric" min="0" max="'+max+'" step="1" data-ex="'+i+'" data-set="'+k+'" value="'+esc(r)+'" placeholder="reps" aria-label="'+esc(ex.name)+' set '+(k+1)+' reps"></label>';
+  }).join('');
+  var fb='';
+  return '<article class="card ex" id="ex-'+i+'" data-ex="'+i+'">'+
+    '<div class="ex-head"><span class="ex-n">'+(i+1)+'</span><h2>'+esc(ex.name)+'</h2>'+(ex.live?'':'<button class="demo" type="button" data-demo="'+i+'">▶ Demo</button>')+'</div>'+
+    '<dl class="tl"><div class="tgt"><dt>Target</dt><dd>'+fmtPlan(ex.plan.target,ex.plan.load)+'</dd></div><div><dt>Last</dt><dd>'+(ex.live?esc(ex.lastText||'First attempt'):fmtPlan(ex.last.reps,ex.last.load))+'</dd></div></dl>'+
+    ((ex.rest||ex.tempo)?'<div class="ex-meta">'+[ex.rest?'Rest '+esc(ex.rest):'',ex.tempo?'tempo '+esc(ex.tempo):''].filter(Boolean).join(' · ')+'</div>':'')+(ex.note?'<div class="ex-note">'+esc(ex.note)+'</div>':'')+
+    '<div class="sets" style="--n:'+ex.sets+'">'+sets+'<label class="setf"><span>Load kg</span><input type="number" inputmode="decimal" step="0.5" min="0" data-ex="'+i+'" data-load="1" value="'+esc(d.load)+'" '+(ex.plan.load==null?'placeholder="none"':'')+' aria-label="'+esc(ex.name)+' load in kilograms"></label></div>'+
+    '<div class="err" id="err-'+i+'" role="alert"></div>'+
+    '<div class="fb" role="group" aria-label="How did it feel">'+fb+'<span class="rowstate" id="rs-'+i+'"></span></div></article>';
+}
+function renderTrain(){
+  var v=$('#view-train');
+  if(finished()){v.innerHTML=finishedCard();return;}
+  var s=curSession();
+  if(isHy(s)){renderHyrox(s);return;}
+  v.innerHTML=
+    '<div><div class="eyebrow">Progressive training</div><div class="h1" style="margin-top:8px">'+esc(s.name)+'</div>'+
+    '<div class="meta" style="margin-top:8px">Cycle '+cycleNo()+' of '+CFG.cycles+' · Session '+sessNo()+' of '+CFG.perCycle+' · '+completed+' of '+TOTAL+' sessions completed</div></div>'+
+    '<div class="chips"><span class="pill">This week: '+Math.min(sessionsThisWeek(),CFG.plannedPerWeek)+' of '+CFG.plannedPerWeek+' sessions</span>'+(carriedOver()>0?'<span class="pill warn">'+carriedOver()+' carried over</span>':'')+'</div>'+
+    '<p class="hint">Train on any day that suits you. Your next session is always the next one in order, so a missed one waits for you. Enter reps for each set, and use 0 only if you tried a set and got no reps. Leave the load blank for bodyweight moves.</p>'+
+    s.ex.map(exCard).join('')+
+    '<div class="dock"><div class="row"><span id="dockcount"></span></div><button class="btn primary block" type="button" id="complete" disabled>Complete session</button></div>';
+  wireTrain();
+  s.ex.forEach(function(e,i){refreshRow(i);});
+  refreshDock();
+}
+function refreshRow(i){
+  var st=rowState(i),card=$('#ex-'+i);if(!card){return;}
+  card.classList.toggle('done',st.complete);
+  $('#rs-'+i).textContent=st.complete?'✓ Ready':'';
+  $('#err-'+i).textContent=st.invalid||'';
+  $$('input',card).forEach(function(x){x.classList.toggle('bad',false);});
+  if(st.invalid){
+    var ex=curSession().ex[i],d=inp(i),max=maxReps(ex);
+    $$('input[data-set]',card).forEach(function(x){var r=d.reps[Number(x.dataset.set)];if(r!==''){var n=Number(r);x.classList.toggle('bad',isNaN(n)||n<0||n>max||Math.floor(n)!==n);}});
+    var l=$('input[data-load]',card);if(d.load!==''&&(isNaN(Number(d.load))||Number(d.load)<0)){l.classList.add('bad');}
+  }
+}
+function refreshDock(){
+  var s=curSession(),n=0,all,msg;
+  if(isHy(s)){
+    var tot=0;
+    s.seg.forEach(function(g,i){var st=hyState(i);if(st.complete){n++;}if(st.secs!=null){tot+=st.secs;}});
+    all=n===s.seg.length;
+    msg=all?'All '+s.seg.length+' splits ready · total '+fmtT(tot):n+' of '+s.seg.length+' splits ready';
+  }else{
+    s.ex.forEach(function(e,i){if(rowState(i).complete){n++;}});
+    all=n===s.ex.length&&s.ex.length>0;
+    msg=all?'All '+s.ex.length+' exercises ready':n+' of '+s.ex.length+' exercises ready';
+  }
+  $('#dockcount').textContent=msg;
+  $('#complete').disabled=!all;
+}
+function wireTrain(){
+  var v=$('#view-train');
+  $$('input[data-ex]',v).forEach(function(x){x.addEventListener('input',function(){
+    var i=Number(x.dataset.ex),d=inp(i);
+    if(x.dataset.load){d.load=x.value;}else{d.reps[Number(x.dataset.set)]=x.value;}
+    refreshRow(i);refreshDock();
+  });});
+  $$('[data-fb]',v).forEach(function(b){b.addEventListener('click',function(){
+    var i=Number(b.dataset.ex),d=inp(i);d.fb=d.fb===b.dataset.fb?'':b.dataset.fb;
+    $$('[data-fb][data-ex="'+i+'"]',v).forEach(function(c){c.classList.toggle('on',c.dataset.fb===d.fb);});
+  });});
+  $$('[data-demo]',v).forEach(function(b){b.addEventListener('click',function(){toast('Demo video opens here (link from your Training Plan tab)');});});
+  $('#complete').addEventListener('click',openSummary);
+}
+function results(){
+  return curSession().ex.map(function(ex,i){
+    var d=inp(i),reps=d.reps.map(Number),load=d.load===''?null:Number(d.load);
+    return {ex:ex,reps:reps,load:load,next:progress(ex,{reps:reps,load:load,target:ex.plan.target})};
+  });
+}
+function openSummary(){
+  if(LIVE){openLiveSummary();return;}
+  var s=curSession(),res=results();
+  var rows=res.map(function(r){
+    return '<div class="sum"><b>'+esc(r.ex.name)+'</b><span>Done '+fmtPlan(r.reps,r.load)+'</span><span class="nx">Next: '+fmtPlan(r.next.target,r.next.load)+'</span><span class="why">'+esc(r.next.why)+'</span></div>';
+  }).join('');
+  var nxt=SESSIONS[(completed+1)%CFG.perCycle].name;
+  openSheet('<div class="h2">Log '+esc(s.name)+'?</div><div class="meta">This saves the session and sets your next targets. '+(completed+1>=TOTAL?'That finishes your block.':'Next up: '+esc(nxt)+'.')+'</div>'+rows+
+    '<button class="btn primary block" type="button" id="confirmdone">Log session and load next</button><button class="btn ghost block" type="button" id="backto">Back to session</button>');
+  $('#backto').addEventListener('click',closeSheet);
+  $('#confirmdone').addEventListener('click',function(){
+    var res2=results(),name=s.name,progressed=res2.filter(function(r){return r.next.kind==='load'||r.next.kind==='rep';}).length;
+    res2.forEach(function(r){r.ex.last={reps:r.reps,load:r.load,target:r.ex.plan.target};r.ex.plan=r.next;});
+    state.history.push({date:todayIso,name:name,note:progressed+' of '+res2.length+' progressed'});
+    completed++;train.inputs={};train.fb='';
+    closeSheet();
+    toast(name+' logged ('+wkCount()+')'+(finished()?'. Block complete.':'. '+curSession().name+' is loaded.'));
+    renderTrain();$('#main').scrollTop=0;
+  });
+}
+
+/* ---------- TRAIN: timed (Hyrox style) ---------- */
+function hin(i){
+  if(!train.inputs[i]){var g=curSession().seg[i];train.inputs[i]={t:'',load:g.loadKg==null?'':String(g.plan.load),touched:false};}
+  return train.inputs[i];
+}
+function hyState(i){
+  var g=curSession().seg[i],d=hin(i),p=parseT(d.t),o={complete:true,invalid:null,warn:null,badTime:false,badLoad:false,secs:null};
+  if(!p){o.complete=false;}
+  else if(p.sec>59){o.invalid='Seconds must be 00 to 59.';o.badTime=true;o.complete=false;}
+  else if(p.total<10||p.total>3600){o.invalid='Enter a time between 0:10 and 60:00.';o.badTime=true;o.complete=false;}
+  else{
+    o.secs=p.total;var r=p.total/g.plan.tgt;
+    if(r<0.6||r>1.6){o.warn='Far from your '+fmtT(g.plan.tgt)+' target. Check the time before you log it.';}
+  }
+  if(g.loadKg!=null){
+    if(d.load===''){o.complete=false;}
+    else if(isNaN(Number(d.load))||Number(d.load)<0){o.invalid=o.invalid||'Load must be 0 or more.';o.badLoad=true;o.complete=false;}
+  }
+  return o;
+}
+function hyRow(g,i){
+  var d=hin(i),stn=g.kind==='stn',sub2='';
+  if(stn){
+    sub2='<div class="hy-sub2">'+(g.loadKg!=null?'<label class="hy-load"><span>'+esc(g.loadLabel)+'</span><input type="number" inputmode="decimal" step="0.5" min="0" data-hy="'+i+'" data-load="1" value="'+esc(d.load)+'" aria-label="'+esc(g.name)+' load in kilograms"></label>':'<span class="hy-load"></span>')+
+      '<button class="demo" type="button" data-demo="'+i+'">▶ Demo</button></div>';
+  }
+  return '<div class="hy-row'+(stn?' stn':'')+'" id="hy-'+i+'">'+
+    '<div class="hy-main"><span class="hy-tag">'+(stn?'STATION':'RUN')+'</span><div class="hy-name"><b>'+esc(g.name)+'</b><span>'+esc(g.dist)+'</span></div>'+
+    '<div class="hy-time"><input type="text" inputmode="numeric" autocomplete="off" placeholder="m:ss" data-hy="'+i+'" data-time="1" value="'+esc(d.t)+'" aria-label="'+esc(g.name)+' time in minutes and seconds"></div></div>'+
+    '<div class="hy-sub">Target <b>'+fmtT(g.plan.tgt)+'</b> · Last '+fmtT(g.last.sec)+(g.loadKg!=null&&g.last.load!=null?' @ '+g.last.load+' kg':'')+'</div>'+
+    (g.note?'<div class="ex-note hy-note">'+esc(g.note)+'</div>':'')+sub2+
+    '<div class="err" id="hye-'+i+'" role="alert"></div><div class="hy-warn" id="hyw-'+i+'"></div></div>';
+}
+function renderHyrox(s){
+  var v=$('#view-train');
+  var tgt=s.seg.reduce(function(a,g){return a+g.plan.tgt;},0),last=s.seg.reduce(function(a,g){return a+g.last.sec;},0);
+  var fb=['Easy','Good','Hard'].map(function(f){return '<button type="button" class="chip'+(train.fb===f?' on':'')+'" data-hyfb="'+f+'">'+f+'</button>';}).join('');
+  v.innerHTML=
+    '<div><div class="eyebrow">Timed session · '+esc(s.format)+'</div><div class="h1" style="margin-top:8px">'+esc(s.name)+'</div>'+
+    '<div class="meta" style="margin-top:8px">Cycle '+cycleNo()+' of '+CFG.cycles+' · Session '+sessNo()+' of '+CFG.perCycle+' · '+completed+' of '+TOTAL+' sessions completed</div></div>'+
+    '<div class="chips"><span class="pill">This week: '+Math.min(sessionsThisWeek(),CFG.plannedPerWeek)+' of '+CFG.plannedPerWeek+' sessions</span>'+(carriedOver()>0?'<span class="pill warn">'+carriedOver()+' carried over</span>':'')+'</div>'+
+    '<div class="tiles" style="grid-template-columns:1fr 1fr"><div class="tile"><div class="eyebrow">Target total</div><div class="num">'+fmtT(tgt)+'</div></div><div class="tile"><div class="eyebrow">Last time</div><div class="num">'+fmtT(last)+'</div></div></div>'+
+    '<p class="hint">'+esc(s.blurb)+' Type each time as digits and it fills in as minutes and seconds: 542 becomes 5:42. Do it on any day that suits you.</p>'+
+    '<div class="card hy">'+s.seg.map(hyRow).join('')+'</div>'+
+    '<div class="dock"><div class="row"><span id="dockcount"></span></div><button class="btn primary block" type="button" id="complete" disabled>Complete session</button></div>';
+  wireHyrox();
+  s.seg.forEach(function(g,i){refreshHy(i);});
+  refreshDock();
+}
+function refreshHy(i){
+  var row=$('#hy-'+i);if(!row){return;}
+  var st=hyState(i),d=hin(i),ti=$('input[data-time]',row),li=$('input[data-load]',row);
+  row.classList.toggle('done',st.complete);
+  ti.classList.toggle('bad',d.touched&&st.badTime);
+  ti.classList.toggle('warn',d.touched&&!!st.warn);
+  if(li){li.classList.toggle('bad',st.badLoad);}
+  $('#hye-'+i).textContent=(d.touched||st.badLoad)&&st.invalid?st.invalid:'';
+  $('#hyw-'+i).textContent=d.touched&&st.warn?st.warn:'';
+}
+function wireHyrox(){
+  var v=$('#view-train');
+  $$('input[data-hy]',v).forEach(function(x){
+    var i=Number(x.dataset.hy);
+    x.addEventListener('input',function(){
+      var d=hin(i);
+      if(x.dataset.time){var m=maskT(x.value);x.value=m;d.t=m;}else{d.load=x.value;}
+      refreshHy(i);refreshDock();
+    });
+    x.addEventListener('blur',function(){hin(i).touched=true;refreshHy(i);});
+  });
+  $$('[data-hyfb]',v).forEach(function(b){b.addEventListener('click',function(){
+    train.fb=train.fb===b.dataset.hyfb?'':b.dataset.hyfb;
+    $$('[data-hyfb]',v).forEach(function(c){c.classList.toggle('on',c.dataset.hyfb===train.fb);});
+  });});
+  $$('[data-demo]',v).forEach(function(b){b.addEventListener('click',function(){toast('Demo video opens here (link from your Training Plan tab)');});});
+  $('#complete').addEventListener('click',openHySummary);
+}
+function hyResults(){
+  return curSession().seg.map(function(g,i){
+    var d=hin(i),sec=parseT(d.t).total,load=g.loadKg==null?null:Number(d.load);
+    return {g:g,sec:sec,load:load,next:hyNext(sec,g.plan.tgt)};
+  });
+}
+function openHySummary(){
+  var s=curSession(),res=hyResults();
+  var total=res.reduce(function(a,r){return a+r.sec;},0),prev=s.seg.reduce(function(a,g){return a+g.last.sec;},0),diff=total-prev;
+  var head=diff<0?fmtT(-diff)+' faster than last time.':diff>0?fmtT(diff)+' slower than last time.':'Same as last time.';
+  var rows=res.map(function(r){
+    return '<div class="sum"><div class="row"><b>'+esc(r.g.name)+'</b><b>'+fmtT(r.sec)+(r.load!=null?' <span style="font-weight:500;color:var(--mute)">@ '+r.load+' kg</span>':'')+'</b></div><span class="why">'+esc(r.next.why)+'</span></div>';
+  }).join('');
+  var nxt=SESSIONS[(completed+1)%CFG.perCycle].name;
+  openSheet('<div class="h2">Log '+esc(s.name)+'?</div><div class="meta"><b style="color:var(--chalk)">Total '+fmtT(total)+'.</b> '+head+' '+(completed+1>=TOTAL?'That finishes your block.':'Next up: '+esc(nxt)+'.')+'</div>'+rows+
+    '<button class="btn primary block" type="button" id="confirmdone">Log session and load next</button><button class="btn ghost block" type="button" id="backto">Back to session</button>');
+  $('#backto').addEventListener('click',closeSheet);
+  $('#confirmdone').addEventListener('click',function(){
+    var res2=hyResults(),name=s.name,t2=res2.reduce(function(a,r){return a+r.sec;},0);
+    res2.forEach(function(r){
+      r.g.last={sec:r.sec,tgt:r.g.plan.tgt,load:r.load};
+      r.g.plan={tgt:r.next.tgt,load:r.load,kind:r.next.kind,why:r.next.why};
+      if(r.load!=null){r.g.loadKg=r.load;}
+    });
+    state.history.push({date:todayIso,name:name,type:'hyrox',total:t2,splits:res2.map(function(r){return {name:r.g.name,sec:r.sec};}),note:'Total '+fmtT(t2)+(prev?' ('+sT(t2-prev)+')':'')});
+    completed++;train.inputs={};train.fb='';
+    closeSheet();
+    toast(name+' logged ('+wkCount()+')'+(finished()?'. Block complete.':'. '+curSession().name+' is loaded.'));
+    renderTrain();$('#main').scrollTop=0;
+  });
+}
+
+/* ---------- CHECK-IN ---------- */
+function renderCheckin(){
+  var v=$('#view-checkin');
+  var logs=thisWeekLogs(),n=logs.length;
+  var wk=weeklyRows(),cur=wk.filter(function(r){return r.week===THIS_WEEK;})[0],prev=wk.filter(function(r){return r.week===THIS_WEEK-1;})[0];
+  var kc=n?avg(logs.map(function(x){return x.e.kcal;})):null;
+  var kt=n?TARGETS.kcal:null;
+  var st=n?avg(logs.map(function(x){return x.e.steps;})):null;
+  var sess=sessionsThisWeek();
+  var stats=
+    '<div class="tile"><div class="eyebrow">Days logged</div><div class="num">'+n+'<small>/ 7</small></div></div>'+
+    '<div class="tile"><div class="eyebrow">Avg weight</div><div class="num">'+(cur?cur.avg.toFixed(1):'—')+'<small>kg</small></div><div class="sub">'+(cur&&prev?signed(cur.avg-prev.avg)+' vs last week':'')+'</div></div>'+
+    '<div class="tile"><div class="eyebrow">Sessions</div><div class="num">'+sess+'<small>/ '+CFG.plannedPerWeek+'</small></div></div>'+
+    '<div class="tile"><div class="eyebrow">Calories</div><div class="num">'+(kc?fmt(kc):'—')+'</div><div class="sub">'+(kt?'target '+fmt(kt):'')+'</div></div>'+
+    '<div class="tile"><div class="eyebrow">Steps</div><div class="num">'+(st?fmt(st):'—')+'</div><div class="sub">target '+fmt(TARGETS.steps)+'</div></div>'+
+    '<div class="tile"><div class="eyebrow">Check-in day</div><div class="num" style="font-size:24px">Sun</div></div>';
+  var slots=[['front','Front'],['side','Side'],['back','Back']].map(function(s){
+    return '<label class="photo"><input type="file" accept="image/*" data-photo="'+s[0]+'" hidden><span class="ph-box'+(state.photos[s[0]]?' has':'')+'" id="ph-'+s[0]+'">+</span>'+s[1]+'</label>';
+  }).join('');
+  var sent=state.checkin.sent;
+  var sentBox=sent
+    ? '<div class="banner ok"><div><b>Check-in sent '+fmtDate(sent)+', '+pad(sent.getHours())+':'+pad(sent.getMinutes())+'.</b> '+(LIVE?'Preview only, so it has not gone to the sheet.':'On '+esc(CFG.coach)+'’s dashboard this shows as <b>Ready to review</b>.')+'</div></div><button class="btn ghost block" type="button" id="resend">Edit and send again</button>'
+    : '<button class="btn primary block" type="button" id="sendci">Send check-in</button>';
+  v.innerHTML=
+    '<div><div class="eyebrow">Week '+THIS_WEEK+' · '+fmtDate(monday)+' to '+fmtDate(addDays(monday,6))+'</div><div class="h1" style="margin-top:8px">Weekly check-in</div></div>'+
+    previewBanner()+'<div class="tiles">'+stats+'</div>'+
+    (n<5&&!sent?'<div class="banner warn"><div><b>Only '+n+' of 7 days logged.</b> You can still send it, or back-fill missing days on the Log tab first.</div></div>':'')+
+    (CFG.photos?'<div class="card"><div class="eyebrow">Progress photos</div><div class="hint">Same spot, same light, same time of day. Morning before food is best.</div><div class="photos">'+slots+'</div></div>':'')+
+    '<label class="field card"><span class="eyebrow">Message for '+esc(CFG.coach)+'</span><textarea id="cinote" placeholder="How did the week go? Wins, struggles, questions.">'+esc(state.checkin.note)+'</textarea></label>'+
+    sentBox;
+  Object.keys(state.photos).forEach(function(k){var b=$('#ph-'+k);if(b){b.style.backgroundImage='url("'+state.photos[k]+'")';}});
+  $$('input[data-photo]',v).forEach(function(inp){inp.addEventListener('change',function(){
+    var f=inp.files&&inp.files[0];if(!f){return;}
+    var rd=new FileReader();rd.onload=function(){state.photos[inp.dataset.photo]=rd.result;var b=$('#ph-'+inp.dataset.photo);b.style.backgroundImage='url("'+rd.result+'")';b.classList.add('has');};rd.readAsDataURL(f);
+  });});
+  $('#cinote').addEventListener('input',function(ev){state.checkin.note=ev.target.value;});
+  var sb=$('#sendci');if(sb){sb.addEventListener('click',function(){state.checkin.sent=new Date();toast(LIVE?'Check-in saved in preview only':'Check-in sent to '+CFG.coach);renderCheckin();$('#main').scrollTop=0;});}
+  var rs=$('#resend');if(rs){rs.addEventListener('click',function(){state.checkin.sent=null;renderCheckin();});}
+}
+
+/* ---------- PROGRESS ---------- */
+function chartSVG(){
+  var pts=Object.keys(state.weights).sort().map(function(k){return {d:fromIso(k),kg:state.weights[k]};});
+  var wk=weeklyRows();
+  var W=340,H=196,L=38,R=12,Tp=14,B=28;
+  var kgs=pts.map(function(p){return p.kg;});
+  var lo=Math.floor(Math.min.apply(null,kgs)*2)/2-0.5,hi=Math.ceil(Math.max.apply(null,kgs)*2)/2+0.5;
+  var span=20;
+  var X=function(day){return L+(day/span)*(W-L-R);};
+  var Y=function(kg){return Tp+(hi-kg)/(hi-lo)*(H-Tp-B);};
+  var dayIdx=function(d){return Math.round((d-startMonday)/864e5);};
+  var grid='';
+  [hi,(hi+lo)/2,lo].forEach(function(g){grid+='<line x1="'+L+'" x2="'+(W-R)+'" y1="'+Y(g)+'" y2="'+Y(g)+'" style="stroke:var(--line)" stroke-width="1"/><text x="'+(L-6)+'" y="'+(Y(g)+4)+'" text-anchor="end" font-size="11" style="fill:var(--mute)">'+g.toFixed(1)+'</text>';});
+  var xl='';[['Week 1',3],['Week 2',10],['Week 3',17]].forEach(function(w){xl+='<text x="'+X(w[1])+'" y="'+(H-8)+'" text-anchor="middle" font-size="11" style="fill:var(--mute)">'+w[0]+'</text>';});
+  var dots=pts.map(function(p){return '<circle cx="'+X(dayIdx(p.d)).toFixed(1)+'" cy="'+Y(p.kg).toFixed(1)+'" r="3" style="fill:var(--mute)" opacity=".65"/>';}).join('');
+  var line=wk.map(function(r){return [X((r.week-1)*7+3),Y(r.avg)];});
+  var path=line.map(function(p){return p[0].toFixed(1)+','+p[1].toFixed(1);}).join(' ');
+  var marks=line.map(function(p,i){var last=i===line.length-1;return '<circle cx="'+p[0].toFixed(1)+'" cy="'+p[1].toFixed(1)+'" r="'+(last?6:4)+'" style="fill:var(--plate);stroke:var(--ink)" stroke-width="2"/>';}).join('');
+  return '<svg class="chart" viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Bodyweight by day with weekly averages">'+grid+xl+dots+(line.length>1?'<polyline points="'+path+'" fill="none" style="stroke:var(--plate)" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>':'')+marks+'</svg>';
+}
+function renderProgress(){
+  var v=$('#view-progress');
+  var wk=weeklyRows(),first=wk[0],last=wk[wk.length-1];
+  var change=last.avg-first.avg;
+  var rows=wk.slice().reverse().map(function(r){
+    return '<tr><td>Week '+r.week+'</td><td>'+r.avg.toFixed(1)+'</td><td class="'+(r.change==null?'':r.change>0?'up':'down')+'">'+(r.change==null?'—':signed(r.change))+'</td><td>'+r.logged+' / 7</td></tr>';
+  }).join('');
+  var hy=state.history.filter(function(h){return h.type==='hyrox';}),hyCard='';
+  if(hy.length){
+    var lh=hy[hy.length-1],ph=hy[hy.length-2],best={};
+    hy.forEach(function(h){h.splits.forEach(function(p){if(best[p.name]==null||p.sec<best[p.name]){best[p.name]=p.sec;}});});
+    var hrows=lh.splits.map(function(p){
+      var q=ph?ph.splits.filter(function(x){return x.name===p.name;})[0]:null,dl=q?p.sec-q.sec:null;
+      return '<tr><td>'+esc(p.name)+'</td><td>'+fmtT(p.sec)+'</td><td class="'+(dl==null||dl===0?'':dl<0?'down':'up')+'">'+(dl==null?'—':sT(dl))+'</td><td>'+fmtT(best[p.name])+'</td></tr>';
+    }).join('');
+    hyCard='<div class="card"><div class="eyebrow">Hyrox sim · '+fmtDate(fromIso(lh.date))+'</div><div class="row"><span class="num">'+fmtT(lh.total)+'</span><span class="meta">'+(ph?sT(lh.total-ph.total)+' vs previous sim':'First sim logged')+'</span></div>'+
+      '<table><thead><tr><th>Split</th><th>Time</th><th>Change</th><th>Best</th></tr></thead><tbody>'+hrows+'</tbody></table></div>';
+  }
+  var hist=state.history.slice().reverse().slice(0,6).map(function(h){
+    return '<tr><td>'+esc(h.name)+'</td><td>'+fmtDate(fromIso(h.date))+'</td><td>'+esc(h.note)+'</td></tr>';
+  }).join('');
+  v.innerHTML=
+    '<div><div class="eyebrow">Progress</div><div class="h1" style="margin-top:8px">Your trend</div></div>'+
+    '<div class="tiles"><div class="tile"><div class="eyebrow">Start</div><div class="num">'+first.avg.toFixed(1)+'<small>kg</small></div></div>'+
+    '<div class="tile"><div class="eyebrow">Now</div><div class="num">'+last.avg.toFixed(1)+'<small>kg</small></div></div>'+
+    '<div class="tile"><div class="eyebrow">Change</div><div class="num '+(change>0?'up':'down')+'">'+signed(change)+'<small>kg</small></div></div></div>'+
+    '<div class="card"><div class="eyebrow">Bodyweight</div>'+chartSVG()+'<div class="hint">Grey dots are daily weigh-ins. The yellow line is your weekly average. The trend is what matters.</div></div>'+
+    hyCard+'<div class="card"><div class="eyebrow">Week by week</div><table><thead><tr><th>Week</th><th>Avg kg</th><th>Change</th><th>Logged</th></tr></thead><tbody>'+rows+'</tbody></table></div>'+
+    '<div class="card"><div class="eyebrow">Recent sessions</div><table><thead><tr><th>Session</th><th>Date</th><th>Result</th></tr></thead><tbody>'+hist+'</tbody></table></div>';
+}
+
+function renderProgressLive(){
+  var v=$('#view-progress');
+  var hist=state.history.slice().reverse();
+  var cards=hist.slice(0,5).map(function(h){
+    var rows=(h.exercises||[]).map(function(e){
+      var nx=(e.nextReps||[]).slice(0,e.nextSets);
+      return '<div class="sum"><b>'+esc(e.name)+'</b><span>Done '+fmtPlan(e.actualReps||[],e.actualLoad)+'</span><span class="nx">Next: '+fmtPlan(nx,e.nextLoad)+'</span><span class="why">'+esc(nice(String(e.outcome||'').replace('•','·')))+'</span></div>';
+    }).join('');
+    return '<div class="card"><div class="eyebrow">'+fmtDate(fromIso(h.date))+' · Cycle '+h.cycle+', session '+h.session+'</div><div class="row"><div class="h2" style="font-size:22px">'+esc(h.name)+'</div><span class="pill">'+esc(h.note)+'</span></div>'+rows+'</div>';
+  }).join('');
+  v.innerHTML=
+    '<div><div class="eyebrow">Progress</div><div class="h1" style="margin-top:8px">Your training</div></div>'+
+    '<div class="tiles"><div class="tile"><div class="eyebrow">Sessions</div><div class="num">'+completed+'<small>of '+TOTAL+'</small></div></div>'+
+    '<div class="tile"><div class="eyebrow">Cycle</div><div class="num">'+Math.min(cycleNo(),CFG.cycles)+'<small>of '+CFG.cycles+'</small></div></div>'+
+    '<div class="tile"><div class="eyebrow">This week</div><div class="num">'+Math.min(sessionsThisWeek(),CFG.plannedPerWeek)+'<small>of '+CFG.plannedPerWeek+'</small></div></div></div>'+
+    (cards||'<div class="card"><div class="eyebrow">Sessions</div><div class="meta">No sessions logged yet. Your first one will show up here with your next targets.</div></div>')+
+    '<div class="card"><div class="eyebrow">Bodyweight trend</div><div class="hint">Your weight chart appears here once daily logs are connected to your sheet.</div></div>';
+}
+
+/* ---------- routing ---------- */
+var VIEWS=['home','log','train','checkin','progress'];
+var RENDER={home:renderHome,log:renderLog,train:renderTrain,checkin:renderCheckin,progress:function(){if(LIVE){renderProgressLive();}else{renderProgress();}}};
+function route(){
+  var h=(location.hash||'#home').slice(1);
+  if(VIEWS.indexOf(h)<0){h='home';}
+  if(BOOT==='loading'||BOOT==='error'){
+    closeSheet();
+    VIEWS.forEach(function(n){$('#view-'+n).hidden=n!=='home';});
+    $$('#nav a').forEach(function(a){a.classList.remove('on');a.removeAttribute('aria-current');});
+    $('#view-home').innerHTML=bootHtml();wireBoot();return;
+  }
+  closeSheet();
+  VIEWS.forEach(function(n){$('#view-'+n).hidden=n!==h;});
+  $$('#nav a').forEach(function(a){var on=a.dataset.tab===h;a.classList.toggle('on',on);if(on){a.setAttribute('aria-current','page');}else{a.removeAttribute('aria-current');}});
+  RENDER[h]();
+  $('#main').scrollTop=0;
+}
+document.addEventListener('click',function(ev){
+  var g=ev.target.closest('[data-go]');
+  if(g){location.hash=g.dataset.go;}
+});
+window.addEventListener('hashchange',route);
+TOKEN=getToken();
+if(CFG.api&&TOKEN){startLive();}
+else if(CFG.api){BOOT='error';BOOTERR='This link is missing your private code. Open the exact link your coach sent you.';route();}
+else{route();}
+})();
+</script>
+</body>
+</html>
