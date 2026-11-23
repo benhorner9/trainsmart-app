@@ -416,7 +416,7 @@ function buildDemoLibrary(){
   return order.map(function(t){return {type:t,meals:by[t].sort(function(a,b){return (a.best===b.best)?0:(a.best?-1:1);})};});
 }
 var DEMO_NUT=buildDemoNut();DEMO_NUT.library=buildDemoLibrary();
-var nut=null,mealSlot=0,mealPick={};
+var nut=null,nutFail=null,mealSlot=0,mealPick={};
 function nutrition(){return LIVE?nut:DEMO_NUT;}
 function fv(v){return v==null?'—':fmt(v);}
 var SEED_NOTES=['4 of 5 progressed','3 of 5 progressed','5 of 5 progressed','2 of 5 progressed'];
@@ -541,7 +541,7 @@ function liveEx(e){
     plan:{target:(e.targetReps||[]).slice(),load:e.targetLoad==null?null:Number(e.targetLoad),kind:'',why:''}};
 }
 function applyLive(home,sess,hist,nutr){
-  nut=nutr&&nutr.ok?nutr:null;
+  nut=nutr&&nutr.ok?nutr:null;nutFail=nutr&&!nutr.ok?nutr:null;
   var st=sess.state||home.state;
   live.state=st;
   live.names=(home.sessionNames||[]).map(nice);
@@ -559,7 +559,7 @@ function applyLive(home,sess,hist,nutr){
   if(key!==live.key){train.inputs={};live.key=key;}
 }
 function fetchLive(){
-  return Promise.all([api('home'),api('session'),api('history'),api('nutrition').catch(function(){return null;})]).then(function(r){applyLive(r[0],r[1],r[2],r[3]);});
+  return Promise.all([api('home'),api('session'),api('history'),api('nutrition').catch(function(e){return {ok:false,error:(e&&e.code)||'error',message:(e&&e.message)||''};})]).then(function(r){applyLive(r[0],r[1],r[2],r[3]);});
 }
 function setPill(){var p=$('#modePill');if(!p){return;}if(LIVE){p.textContent='Live';p.className='pill good';}else{p.textContent='Sample data';p.className='pill';}}
 function startLive(){
@@ -1039,7 +1039,10 @@ function renderMeals(){
   var head='<div><div class="eyebrow">Meal plan</div><div class="h1" style="margin-top:8px">What to eat</div></div>';
   var groups=n&&n.ready?mealGroups(n):[];
   if(!groups.length){
-    v.innerHTML=head+'<div class="card next"><div class="eyebrow">Not ready yet</div><div class="h1" style="font-size:30px">Your meal plan is on its way</div><div class="meta">'+esc(CFG.coach)+' is still setting it up. It will appear here as soon as it is ready.</div></div>';
+    var why='';
+    if(LIVE&&nutFail){why=nutFail.error==='unknown_action'?'Coach note: the sheet connection has not been updated to serve meals yet.':'Coach note: the sheet said "'+(nutFail.message||nutFail.error)+'".';}
+    else if(LIVE&&n&&!n.ready){why='Coach note: no meals were found for this client\'s diet type.';}
+    v.innerHTML=head+'<div class="card next"><div class="eyebrow">Not ready yet</div><div class="h1" style="font-size:30px">Your meal plan is on its way</div><div class="meta">'+esc(CFG.coach)+' is still setting it up. It will appear here as soon as it is ready.</div>'+(why?'<div class="hint" style="margin-top:10px">'+esc(why)+'</div>':'')+'</div>';
     return;
   }
   var t=n.targets||{};if(mealSlot>=groups.length){mealSlot=0;}
