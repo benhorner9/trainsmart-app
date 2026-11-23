@@ -202,6 +202,26 @@ th:not(:first-child),td:not(:first-child){text-align:right}
 .ph-box{display:grid;place-items:center;aspect-ratio:3/4;border-radius:12px;border:1px dashed var(--line);background:var(--ink) center/cover no-repeat;font:800 30px/1 var(--font-display);color:var(--mute)}
 .ph-box.has{border-style:solid;border-color:var(--good);color:transparent}
 
+/* meals */
+.meal{display:flex;flex-direction:column;gap:10px}
+.meal h3{font:700 19px/1.2 var(--font-body)}
+.macros{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;font:600 14px/1.2 var(--font-body);color:var(--mute)}
+.macros b{font:800 30px/1 var(--font-display);color:var(--plate);letter-spacing:.01em}
+details.amts{border-top:1px solid var(--line);padding-top:10px}
+details.amts summary{cursor:pointer;font:600 14px/1.2 var(--font-body);display:flex;justify-content:space-between;align-items:center;list-style:none;min-height:32px}
+details.amts summary::-webkit-details-marker{display:none}
+details.amts summary::after{content:'+';color:var(--mute);font-size:20px}
+details.amts[open] summary::after{content:'\2212'}
+details.amts ul{margin-top:8px;padding:0;list-style:none;display:flex;flex-direction:column;gap:7px;font-size:15px}
+details.amts li{padding-left:16px;position:relative}
+details.amts li::before{content:'';position:absolute;left:0;top:9px;width:5px;height:5px;border-radius:50%;background:var(--plate)}
+.wkrow{display:flex;justify-content:space-between;gap:10px;padding:8px 0;border-top:1px solid var(--line);font-size:14px}
+.wkrow:first-of-type{border-top:0}
+.wkrow span:last-child{color:var(--mute);text-align:right}
+/* meal portions */
+.ptns{display:flex;gap:6px}
+.ptn{flex:1;min-height:38px;border-radius:10px;border:1px solid var(--line);background:var(--ink);color:var(--mute);font:600 13px/1 var(--font-body);cursor:pointer}
+.ptn.on{background:var(--plate);border-color:var(--plate);color:var(--plate-ink)}
 /* sheet and toast */
 .scrim{position:absolute;inset:0;background:rgba(0,0,0,.6);z-index:20}
 .sheet{position:absolute;left:0;right:0;bottom:0;z-index:30;max-height:88%;overflow-y:auto;background:var(--panel);border-top:1px solid var(--line);border-radius:18px 18px 0 0;padding:18px 16px calc(18px + env(safe-area-inset-bottom));display:flex;flex-direction:column;gap:12px}
@@ -224,13 +244,14 @@ th:not(:first-child),td:not(:first-child){text-align:right}
     <section class="view" id="view-log" hidden></section>
     <section class="view" id="view-train" hidden></section>
     <section class="view" id="view-checkin" hidden></section>
+    <section class="view" id="view-meals" hidden></section>
     <section class="view" id="view-progress" hidden></section>
   </main>
   <nav id="nav" aria-label="Main">
     <a href="#home" data-tab="home"><svg viewBox="0 0 24 24"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/></svg>Home</a>
     <a href="#log" data-tab="log"><svg viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13 7l4 4"/></svg>Log</a>
     <a href="#train" data-tab="train"><svg viewBox="0 0 24 24"><path d="M3 9v6M6 6v12M18 6v12M21 9v6M6 12h12"/></svg>Train</a>
-    <a href="#checkin" data-tab="checkin"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8 12.5l2.7 2.7L16 9.5"/></svg>Check-in</a>
+    <a href="#meals" data-tab="meals"><svg viewBox="0 0 24 24"><path d="M7 3v8M4.5 3v5a2.5 2.5 0 0 0 5 0V3M7 11v10"/><path d="M17 21V3c-2.2 1.4-3.5 4-3.5 7.5H17"/></svg>Meals</a>
     <a href="#progress" data-tab="progress"><svg viewBox="0 0 24 24"><path d="M4 19V5"/><path d="M4 19h16"/><path d="M7 14l4-4 3 3 5-6"/></svg>Progress</a>
   </nav>
   <div class="scrim" id="scrim" hidden></div>
@@ -349,6 +370,54 @@ var SESSIONS=[
    hs('run','Run 4','1 km',null,352,350),
    hs('stn','Burpee Broad Jump','80 m',null,318,320,{note:'Chest to the floor, then jump for distance.'})]}
 ];
+var DEMO_MEALS=[
+ ['Breakfast','Protein Oats','Standard',620,43,78,15,'Oats, whey protein, berries, milk','80g oats; 30g whey; 100g berries; 200ml semi-skimmed milk','Vegetarian','10 min'],
+ ['Breakfast','Greek Yoghurt Bowl','Standard',520,35,73,9,'Greek yoghurt, granola, berries, honey','300g 0% Greek yoghurt; 60g granola; 100g berries; 15g honey','Vegetarian','5 min'],
+ ['Breakfast','Breakfast Wrap','Standard',560,36,48,24,'Eggs, chicken sausage, tortilla, salsa','2 eggs; 2 chicken sausages; 1 tortilla; 30g salsa','Omnivore','15 min'],
+ ['Lunch','Chicken Rice Bowl','Standard',650,55,78,12,'Chicken breast, rice, mixed veg, light sauce','160g chicken; 200g cooked rice; 200g mixed vegetables; 30g light sauce','Omnivore','20 min'],
+ ['Lunch','Turkey Wrap','Standard',570,48,49,18,'Turkey, tortilla, salad, cheese, light mayo','150g turkey; 1 tortilla; 80g salad; 25g cheese; 15g light mayo','Omnivore','10 min'],
+ ['Lunch','Tuna Pasta Salad','Standard',610,45,76,13,'Tuna, pasta, sweetcorn, salad, yoghurt dressing','120g tuna; 180g cooked pasta; 50g sweetcorn; 80g salad; 30g yoghurt dressing','Pescatarian','15 min'],
+ ['Snack','Cottage Cheese Snack','Standard',330,28,38,8,'Cottage cheese, fruit, crackers','200g cottage cheese; 150g fruit; 3 crackers','Vegetarian','5 min'],
+ ['Snack','Protein Shake & Banana','Standard',360,32,46,6,'Whey protein, milk, banana','30g whey; 250ml milk; 1 banana','Vegetarian','3 min'],
+ ['Snack','Yoghurt & Fruit','Standard',260,25,34,2,'Greek yoghurt, fruit','250g Greek yoghurt; 150g fruit','Vegetarian','3 min'],
+ ['Dinner','Salmon Potato Plate','Standard',670,42,63,26,'Salmon, potatoes, greens','150g salmon; 300g potatoes; 200g greens','Pescatarian','30 min'],
+ ['Dinner','Lean Beef Bolognese','Standard',720,50,82,20,'Lean beef, pasta, tomato sauce, vegetables','150g 5% beef; 200g cooked pasta; 150g tomato sauce; 100g vegetables','Omnivore','30 min'],
+ ['Dinner','Chicken Fajitas','Standard',650,54,67,17,'Chicken, peppers, onions, tortillas, salsa','170g chicken; 120g peppers; 80g onions; 2 tortillas; 40g salsa','Omnivore','25 min']
+];
+function buildDemoNut(){
+  var slots=[],idx={};
+  DEMO_MEALS.forEach(function(m){
+    if(idx[m[0]]==null){idx[m[0]]=slots.length;slots.push({slot:slots.length+1,type:m[0],options:[]});}
+    var sl=slots[idx[m[0]]];
+    sl.options.push({option:sl.options.length+1,name:m[1],portion:m[2],calories:m[3],protein:m[4],carbs:m[5],fat:m[6],ingredients:m[7],amounts:m[8].split('; '),diet:m[9],prep:m[10],tags:''});
+  });
+  return {ok:true,ready:true,targets:{calories:TARGETS.kcal,protein:TARGETS.p,fats:TARGETS.f,carbs:TARGETS.c,steps:TARGETS.steps,cardio:'',mealsPerDay:4},week:[],style:{diet:'Standard',mealStyle:'No Preference',cooking:'30 min',family:'No'},slots:slots};
+}
+var DEMO_EXTRA=[
+ ['Breakfast','Scrambled Eggs on Toast','Standard',480,34,40,19,'Eggs, wholemeal toast, tomatoes','3 eggs; 2 slices wholemeal toast; 100g tomatoes','Vegetarian','10 min'],
+ ['Breakfast','Berry Protein Pancakes','Standard',540,38,64,12,'Oats, eggs, whey, berries','60g oats; 2 eggs; 30g whey; 100g berries','Vegetarian','15 min'],
+ ['Lunch','Beef Burrito Bowl','Standard',690,50,80,16,'Lean beef, rice, beans, salsa','150g 5% beef; 180g cooked rice; 100g black beans; 40g salsa','Omnivore','25 min'],
+ ['Lunch','Falafel Hummus Wrap','Standard',600,26,78,20,'Falafel, hummus, tortilla, salad','5 falafel; 40g hummus; 1 tortilla; 80g salad','Vegan','10 min'],
+ ['Snack','Rice Cakes & Peanut Butter','Standard',280,10,32,12,'Rice cakes, peanut butter, banana','3 rice cakes; 20g peanut butter; 1 small banana','Vegan','3 min'],
+ ['Dinner','Turkey Chilli & Rice','Standard',640,52,74,14,'Turkey mince, kidney beans, tomatoes, rice','150g turkey mince; 100g kidney beans; 200g tomatoes; 180g cooked rice','Omnivore','35 min'],
+ ['Dinner','Tofu Stir Fry','Standard',600,31,76,21,'Tofu, rice, vegetables, soy sauce','200g tofu; 180g cooked rice; 200g vegetables; 15ml soy sauce','Vegan','20 min']
+];
+function buildDemoLibrary(){
+  var by={},order=[],bestNames={};
+  DEMO_MEALS.forEach(function(m){bestNames[m[1]]=true;});
+  DEMO_MEALS.concat(DEMO_EXTRA).forEach(function(m){
+    if(!by[m[0]]){by[m[0]]=[];order.push(m[0]);}
+    var portions=[['Light',.8],['Standard',1],['Large',1.2]].map(function(x){
+      return {id:m[1]+x[0],portion:x[0],calories:Math.round(m[3]*x[1]),protein:Math.round(m[4]*x[1]),carbs:Math.round(m[5]*x[1]),fat:Math.round(m[6]*x[1]),amounts:m[8].split('; ')};
+    });
+    by[m[0]].push({name:m[1],diet:m[9],prep:m[10],tags:'',ingredients:m[7],best:!!bestNames[m[1]],bestPortion:bestNames[m[1]]?'Standard':'',portions:portions});
+  });
+  return order.map(function(t){return {type:t,meals:by[t].sort(function(a,b){return (a.best===b.best)?0:(a.best?-1:1);})};});
+}
+var DEMO_NUT=buildDemoNut();DEMO_NUT.library=buildDemoLibrary();
+var nut=null,mealSlot=0,mealPick={};
+function nutrition(){return LIVE?nut:DEMO_NUT;}
+function fv(v){return v==null?'—':fmt(v);}
 var SEED_NOTES=['4 of 5 progressed','3 of 5 progressed','5 of 5 progressed','2 of 5 progressed'];
 
 /* ---------- state ---------- */
@@ -470,7 +539,8 @@ function liveEx(e){
     live:true,lastText:e.lastText||'',last:{reps:[],load:null,target:[]},
     plan:{target:(e.targetReps||[]).slice(),load:e.targetLoad==null?null:Number(e.targetLoad),kind:'',why:''}};
 }
-function applyLive(home,sess,hist){
+function applyLive(home,sess,hist,nutr){
+  nut=nutr&&nutr.ok?nutr:null;
   var st=sess.state||home.state;
   live.state=st;
   live.names=(home.sessionNames||[]).map(nice);
@@ -488,7 +558,7 @@ function applyLive(home,sess,hist){
   if(key!==live.key){train.inputs={};live.key=key;}
 }
 function fetchLive(){
-  return Promise.all([api('home'),api('session'),api('history')]).then(function(r){applyLive(r[0],r[1],r[2]);});
+  return Promise.all([api('home'),api('session'),api('history'),api('nutrition').catch(function(){return null;})]).then(function(r){applyLive(r[0],r[1],r[2],r[3]);});
 }
 function setPill(){var p=$('#modePill');if(!p){return;}if(LIVE){p.textContent='Live';p.className='pill good';}else{p.textContent='Sample data';p.className='pill';}}
 function startLive(){
@@ -556,6 +626,7 @@ function renderHome(){
   var hr=new Date().getHours();
   var greet=hr<12?'Morning':hr<18?'Afternoon':'Evening';
   var tg=TARGETS, todayLog=state.logs[todayIso];
+  if(LIVE){var nt=nut&&nut.targets;tg=nt?{kcal:nt.calories,p:nt.protein,c:nt.carbs,f:nt.fats,steps:nt.steps}:null;}
   var days='';
   for(var i=0;i<7;i++){
     var dd=addDays(monday,i), k=iso(dd), cls='day';
@@ -583,13 +654,13 @@ function renderHome(){
     '<div class="meta">Train on any days you like. If you miss one, it carries over and stays next in line.</div>'+
     '<div class="week">'+days+'</div><div class="hint" style="font-size:12px">Green block: the session you trained that day.'+(LIVE?'':' Dot: day logged.')+'</div></div>';
   var tiles=[
-    ['Calories',fmt(tg.kcal),'kcal',todayLog?fmt(todayLog.kcal)+' logged':'',1],
-    ['Protein',tg.p,'g',todayLog?todayLog.p+' logged':'',1],
-    ['Carbs',tg.c,'g',todayLog?todayLog.c+' logged':'',1],
-    ['Fats',tg.f,'g',todayLog?todayLog.f+' logged':'',1],
-    ['Steps',fmt(tg.steps),'',todayLog?fmt(todayLog.steps)+' logged':'',1],
-    ['Cardio',tg.cardioWeek,'min / wk','any days',0]
-  ].map(function(t){return '<div class="tile"><div class="eyebrow">'+t[0]+'</div><div class="num">'+t[1]+'<small>'+t[2]+'</small></div><div class="sub'+(t[3]&&t[4]?' ok':'')+'">'+(t[3]||'&nbsp;')+'</div></div>';}).join('');
+    ['Calories',fv(tg&&tg.kcal),'kcal',todayLog?fmt(todayLog.kcal)+' logged':'',1],
+    ['Protein',fv(tg&&tg.p),'g',todayLog?todayLog.p+' logged':'',1],
+    ['Carbs',fv(tg&&tg.c),'g',todayLog?todayLog.c+' logged':'',1],
+    ['Fats',fv(tg&&tg.f),'g',todayLog?todayLog.f+' logged':'',1],
+    ['Steps',fv(tg&&tg.steps),'',todayLog?fmt(todayLog.steps)+' logged':'',1],
+    ['Cardio',TARGETS.cardioWeek,'min / wk','any days',0]
+  ].slice(0,LIVE?5:6).map(function(t){return '<div class="tile"><div class="eyebrow">'+t[0]+'</div><div class="num">'+t[1]+'<small>'+t[2]+'</small></div><div class="sub'+(t[3]&&t[4]?' ok':'')+'">'+(t[3]||'&nbsp;')+'</div></div>';}).join('');
   var logCard=todayLog
     ? '<div class="banner ok"><div><b>Today is logged.</b> Nice one. You can still update it on the Log tab.</div></div>'
     : '<div class="card"><div class="row"><div><div class="h2">Log today</div><div class="meta">Weight, food, steps, sleep. About a minute.</div></div></div><button class="btn primary block" type="button" data-go="log">Log my day</button></div>';
@@ -601,7 +672,7 @@ function renderHome(){
   v.innerHTML=
     '<div><div class="eyebrow">'+fmtDate(today)+' · Week '+THIS_WEEK+'</div><div class="h1" style="margin-top:8px;font-size:38px">Good '+greet.toLowerCase()+',<br>'+esc(CFG.client)+'</div></div>'+
     nextCard+weekBlock+
-    (LIVE?'':'<div class="stack"><div class="eyebrow">Daily targets</div><div class="tiles">'+tiles+'</div></div>'+logCard+ci);
+    (LIVE&&!tg?'':'<div class="stack"><div class="eyebrow">Daily targets</div><div class="tiles">'+tiles+'</div></div>')+(LIVE?'':logCard+ci);
 }
 
 /* ---------- LOG ---------- */
@@ -634,7 +705,7 @@ function renderLog(){
   var sess=sessionOn(logDate);
   var fields={};NUM_FIELDS.forEach(function(f){fields[f.k]=numField(f,e[f.k]);});
   var scales=SCALES.map(function(s){
-    var btns='';for(var n=1;n<=10;n++){btns+='<button type="button" data-scale="'+s[0]+'" data-val="'+n+'" class="'+(e[s[0]]===n?'on':'')+'" aria-label="'+s[1]+' '+n+'">'+n+'</button>';}
+    var btns='';for(var n=1;n<=7;n++){btns+='<button type="button" data-scale="'+s[0]+'" data-val="'+n+'" class="'+(e[s[0]]===n?'on':'')+'" aria-label="'+s[1]+' '+n+'">'+n+'</button>';}
     return '<div class="field"><span class="fl">'+s[1]+' <i>optional</i></span><div class="scale">'+btns+'</div><div class="scale-ends"><span>'+s[2]+'</span><span>'+s[3]+'</span></div></div>';
   }).join('');
   var saved=logSaved===logDate
@@ -935,6 +1006,62 @@ function openHySummary(){
   });
 }
 
+/* ---------- MEALS ---------- */
+/* Every meal the diet allows, grouped by meal type; best matches first. */
+function mealGroups(n){
+  if(n.library&&n.library.length){return n.library;}
+  var by={},order=[];
+  (n.slots||[]).forEach(function(sl){
+    if(!by[sl.type]){by[sl.type]=[];order.push(sl.type);}
+    sl.options.forEach(function(o){by[sl.type].push({name:o.name,diet:o.diet,prep:o.prep,tags:o.tags,ingredients:o.ingredients,best:true,bestPortion:o.portion,portions:[{id:o.id||o.name,portion:o.portion||'Standard',calories:o.calories,protein:o.protein,carbs:o.carbs,fat:o.fat,amounts:o.amounts||[]}]});});
+  });
+  return order.map(function(t){return {type:t,meals:by[t]};});
+}
+function pickedPortion(gi,mi,m){
+  var k=gi+'|'+mi,want=mealPick[k];
+  var ps=m.portions.slice().sort(function(a,b){return (a.calories||0)-(b.calories||0);});
+  var hit=ps.filter(function(x){return x.portion===want;})[0];
+  if(!hit&&m.bestPortion){hit=ps.filter(function(x){return x.portion===m.bestPortion;})[0];}
+  if(!hit){hit=ps.filter(function(x){return x.portion==='Standard';})[0];}
+  return {list:ps,cur:hit||ps[Math.floor(ps.length/2)]};
+}
+function mealCard(gi,mi,m,open){
+  var pp=pickedPortion(gi,mi,m),o=pp.cur;
+  var macros='<div class="macros"><b>'+fv(o.calories)+'</b><span>kcal</span><span>·</span><span>'+fv(o.protein)+'P</span><span>'+fv(o.carbs)+'C</span><span>'+fv(o.fat)+'F</span></div>';
+  var meta=[m.prep,m.diet].filter(Boolean).map(esc).join(' · ');
+  var ptns=pp.list.length>1?'<div class="ptns" role="group" aria-label="Portion size">'+pp.list.map(function(x){return '<button class="ptn'+(x===o?' on':'')+'" type="button" data-g="'+gi+'" data-m="'+mi+'" data-p="'+esc(x.portion)+'" aria-pressed="'+(x===o)+'">'+esc(x.portion)+'</button>';}).join('')+'</div>':'';
+  var amts=(o.amounts&&o.amounts.length)?'<details class="amts"'+(open?' open':'')+'><summary>Amounts</summary><ul>'+o.amounts.map(function(a){return '<li>'+esc(a)+'</li>';}).join('')+'</ul></details>':'';
+  return '<article class="card meal" data-card="'+gi+'|'+mi+'"><div class="row"><h3>'+esc(m.name)+'</h3>'+(m.best?'<span class="pill good">Best match</span>':'')+'</div>'+macros+(meta?'<div class="meta">'+meta+'</div>':'')+ptns+amts+'</article>';
+}
+function renderMeals(){
+  var v=$('#view-meals'),n=nutrition();
+  var head='<div><div class="eyebrow">Meal plan</div><div class="h1" style="margin-top:8px">What to eat</div></div>';
+  var groups=n&&n.ready?mealGroups(n):[];
+  if(!groups.length){
+    v.innerHTML=head+'<div class="card next"><div class="eyebrow">Not ready yet</div><div class="h1" style="font-size:30px">Your meal plan is on its way</div><div class="meta">'+esc(CFG.coach)+' is still setting it up. It will appear here as soon as it is ready.</div></div>';
+    return;
+  }
+  var t=n.targets||{};if(mealSlot>=groups.length){mealSlot=0;}
+  var st=n.style||{},styleLine=[st.diet,st.mealStyle,st.cooking?'Cooking '+st.cooking:''].filter(Boolean).map(esc).join(' · ');
+  var tiles=[['Calories',fv(t.calories),'kcal'],['Protein',fv(t.protein),'g'],['Carbs',fv(t.carbs),'g'],['Fats',fv(t.fats),'g']].map(function(x){return '<div class="tile"><div class="eyebrow">'+x[0]+'</div><div class="num">'+x[1]+'<small>'+x[2]+'</small></div></div>';}).join('');
+  var chips=groups.map(function(g,i){return '<button class="chip'+(i===mealSlot?' on':'')+'" type="button" data-slot="'+i+'">'+esc(g.type)+' ('+g.meals.length+')</button>';}).join('');
+  var cur=groups[mealSlot],bestN=cur.meals.filter(function(m){return m.best;}).length;
+  v.innerHTML=head+
+    '<div class="stack"><div class="eyebrow">Daily targets'+(t.mealsPerDay?' · '+t.mealsPerDay+' meals':'')+'</div><div class="tiles" style="grid-template-columns:repeat(4,1fr)">'+tiles+'</div></div>'+
+    (styleLine?'<div class="meta">'+styleLine+'</div>':'')+
+    '<div class="chips" id="slotchips">'+chips+'</div>'+
+    '<p class="hint">'+cur.meals.length+' '+esc(cur.type.toLowerCase())+' options'+(bestN?', the '+bestN+' closest to your targets first':'')+'. Pick any one and choose a portion size. Repeating meals is fine.</p>'+
+    '<div class="stack" id="mealList">'+cur.meals.map(function(m,mi){return mealCard(mealSlot,mi,m,false);}).join('')+'</div>';
+  $$('#slotchips [data-slot]',v).forEach(function(b){b.addEventListener('click',function(){mealSlot=Number(b.dataset.slot);renderMeals();window.scrollTo(0,0);});});
+  $('#mealList',v).addEventListener('click',function(e){
+    var b=e.target.closest('[data-p]');if(!b){return;}
+    var gi=Number(b.dataset.g),mi=Number(b.dataset.m),card=b.closest('[data-card]'),d=card.querySelector('details'),open=!!(d&&d.open);
+    mealPick[gi+'|'+mi]=b.dataset.p;
+    var tmp=document.createElement('div');tmp.innerHTML=mealCard(gi,mi,groups[gi].meals[mi],open);
+    card.replaceWith(tmp.firstChild);
+  });
+}
+
 /* ---------- CHECK-IN ---------- */
 function renderCheckin(){
   var v=$('#view-checkin');
@@ -1046,8 +1173,8 @@ function renderProgressLive(){
 }
 
 /* ---------- routing ---------- */
-var VIEWS=['home','log','train','checkin','progress'];
-var RENDER={home:renderHome,log:renderLog,train:renderTrain,checkin:renderCheckin,progress:function(){if(LIVE){renderProgressLive();}else{renderProgress();}}};
+var VIEWS=['home','log','train','meals','checkin','progress'];
+var RENDER={home:renderHome,log:renderLog,train:renderTrain,meals:renderMeals,checkin:renderCheckin,progress:function(){if(LIVE){renderProgressLive();}else{renderProgress();}}};
 function route(){
   var h=(location.hash||'#home').slice(1);
   if(VIEWS.indexOf(h)<0){h='home';}
