@@ -142,6 +142,7 @@ nav a.on{color:var(--plate)}
 .ex-meta{font-size:13px;color:var(--mute)}
 .ex-note{font-size:13px;color:var(--chalk);opacity:.85;border-left:2px solid var(--line);padding-left:10px}
 .sets{display:grid;grid-template-columns:repeat(var(--n),1fr) 1.25fr;gap:8px}
+.sets.wrap{grid-template-columns:repeat(var(--c),1fr);row-gap:12px}
 .setf{display:flex;flex-direction:column;gap:5px;min-width:0}
 .setf span{font:600 11px/1.1 var(--font-body);color:var(--mute);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .setf input{width:100%;min-height:50px;padding:0 6px;text-align:center;background:var(--ink);border:1px solid var(--line);border-radius:10px;font:700 20px/1 var(--font-body);color:var(--chalk)}
@@ -809,7 +810,7 @@ function exCard(ex,i){
     '<div class="ex-head"><span class="ex-n">'+(i+1)+'</span><h2>'+esc(ex.name)+'</h2>'+(ex.live?'':'<button class="demo" type="button" data-demo="'+i+'">▶ Demo</button>')+'</div>'+
     '<dl class="tl"><div class="tgt"><dt>Target</dt><dd>'+fmtPlan(ex.plan.target,ex.plan.load)+'</dd></div><div><dt>Last</dt><dd>'+(ex.live?esc(ex.lastText||'First attempt'):fmtPlan(ex.last.reps,ex.last.load))+'</dd></div></dl>'+
     ((ex.rest||ex.tempo)?'<div class="ex-meta">'+[ex.rest?'Rest '+esc(ex.rest):'',ex.tempo?'tempo '+esc(ex.tempo):''].filter(Boolean).join(' · ')+'</div>':'')+(ex.note?'<div class="ex-note">'+esc(ex.note)+'</div>':'')+
-    '<div class="sets" style="--n:'+ex.sets+'">'+sets+'<label class="setf"><span>Load kg</span><input type="number" inputmode="decimal" step="0.5" min="0" data-ex="'+i+'" data-load="1" value="'+esc(d.load)+'" '+(ex.plan.load==null?'placeholder="none"':'')+' aria-label="'+esc(ex.name)+' load in kilograms"></label></div>'+
+    '<div class="sets'+(ex.sets>=5?' wrap':'')+'" style="--n:'+ex.sets+';--c:'+(ex.sets===5?3:4)+'">'+sets+'<label class="setf"><span>Load kg</span><input type="number" inputmode="decimal" step="0.5" min="0" data-ex="'+i+'" data-load="1" value="'+esc(d.load)+'" '+(ex.plan.load==null?'placeholder="none"':'')+' aria-label="'+esc(ex.name)+' load in kilograms"></label></div>'+
     '<div class="err" id="err-'+i+'" role="alert"></div>'+
     '<div class="fb" role="group" aria-label="How did it feel">'+fb+'<span class="rowstate" id="rs-'+i+'"></span></div></article>';
 }
