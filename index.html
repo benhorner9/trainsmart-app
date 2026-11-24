@@ -252,6 +252,16 @@ th:not(:first-child),td:not(:first-child){text-align:right}
 .ph-box{display:grid;place-items:center;aspect-ratio:3/4;border-radius:12px;border:1px dashed var(--line);background:var(--ink) center/cover no-repeat;font:800 30px/1 var(--font-display);color:var(--mute)}
 .ph-box.has{border-style:solid;border-color:var(--good);color:transparent}
 
+/* personal bests + coach feedback */
+.pbs{gap:0}
+.pbrow{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--line)}
+.pbrow:last-of-type{border-bottom:0}
+.pbrow>div:first-child{display:flex;flex-direction:column;gap:3px;min-width:0}
+.pbrow .meta{font-size:12px}
+.pbv{font:700 20px/1 var(--font-body);color:var(--plate);white-space:nowrap}
+.pbv .meta{font-weight:600;font-size:13px}
+.coachfb{border-color:var(--plate)}
+.fbtext{white-space:pre-wrap;line-height:1.45}
 /* meals */
 .meal{display:flex;flex-direction:column;gap:10px}
 .meal h3{font:700 19px/1.2 var(--font-body)}
@@ -487,7 +497,8 @@ function fv(v){return v==null?'—':fmt(v);}
 var SEED_NOTES=['4 of 5 progressed','3 of 5 progressed','5 of 5 progressed','2 of 5 progressed'];
 
 /* ---------- state ---------- */
-var state={weights:{},logs:{},history:[],photos:{},checkin:{sent:null,note:''}};
+var state={weights:{},logs:{},feedback:{},pbs:null,history:[],photos:{},checkin:{sent:null,note:''}};
+var LOGLIVE=false;
 var W1=[84.7,84.5,84.9,84.4,84.6,84.2,84.5];
 var W2=[84.1,84.0,84.3,null,84.0,83.7,83.9];
 var W3=[83.6,83.5,null,83.4,83.5,83.3,83.4];
@@ -685,8 +696,17 @@ function applyLive(home,sess,hist,nutr){
   live.cur=sess.session?{name:nice(sess.session.name),live:true,ex:(sess.session.exercises||[]).map(liveEx)}:null;
   if(key!==live.key){train.inputs={};live.key=key;}
 }
+function soft(p){return p.catch(function(e){return {ok:false,error:(e&&e.code)||'error',message:(e&&e.message)||''};});}
 function fetchLive(){
-  return Promise.all([api('home'),api('session'),api('history'),api('nutrition').catch(function(e){return {ok:false,error:(e&&e.code)||'error',message:(e&&e.message)||''};})]).then(function(r){applyLive(r[0],r[1],r[2],r[3]);});
+  return Promise.all([api('home'),api('session'),api('history'),soft(api('nutrition')),soft(api('logs')),soft(api('pbs'))]).then(function(r){
+    applyLive(r[0],r[1],r[2],r[3]);
+    var lg=r[4];
+    if(lg&&lg.ok){
+      LOGLIVE=true;state.logs=lg.logs||{};state.feedback=lg.feedback||{};state.weights={};
+      Object.keys(state.logs).forEach(function(k){if(state.logs[k].w!=null){state.weights[k]=state.logs[k].w;}});
+    }
+    state.pbs=r[5]&&r[5].ok?(r[5].pbs||[]):null;
+  });
 }
 function setPill(){
   var p=$('#modePill'),a=$('#avatar');if(!p){return;}
@@ -700,7 +720,7 @@ function setPill(){
 function startLive(){
   BOOT='loading';BOOTERR='';route();
   return fetchLive().then(function(){
-    LIVE=true;BOOT='live';state.weights={};state.logs={};drafts={};state.checkin={sent:null,note:''};setPill();route();
+    LIVE=true;BOOT='live';if(!LOGLIVE){state.weights={};state.logs={};state.feedback={};}drafts={};state.checkin={sent:null,note:''};setPill();route();
   },function(e){BOOT='error';BOOTERR=(e&&e.message)||'Could not load your programme.';route();});
 }
 function bootHtml(){
@@ -745,11 +765,12 @@ function commitLive(btn){
   live.busy=true;
   if(btn){btn.disabled=true;btn.textContent='Saving…';}
   var s=curSession(),name=s.name,cy=live.state.cycle,se=live.state.session,entries=entriesNow();
-  api('complete',{cycle:cy,session:se,entries:entries},60000).then(function(){
+  api('complete',{cycle:cy,session:se,entries:entries},60000).then(function(done){
     train.inputs={};
+    var pbs=(done&&done.newPbs)||[];
     return fetchLive().then(function(){
       live.busy=false;closeSheet();
-      toast(doneMsg(name));
+      toast(pbs.length?'New PB! '+pbs.map(function(p){return nice(p.exercise)+' '+p.text;}).join(' · '):doneMsg(name));
       route();$('#main').scrollTop=0;
     },function(){
       live.busy=false;closeSheet();BOOT='error';BOOTERR='Your session is saved. Your next one didn’t load, so try again.';route();
@@ -802,7 +823,7 @@ function renderHome(){
   }
   var logCard=todayLog
     ? '<div class="banner ok"><div><b>Today is logged.</b> You can still edit it on the Log tab.</div></div>'
-    : '<div class="card"><div class="row"><div><div class="h2">Log today</div><div class="meta" style="margin-top:6px">Weight, food, steps and sleep.</div></div></div><button class="btn primary block" type="button" data-go="log">Log today</button></div>';
+    : '<div class="card"><div class="row"><div><div class="h2">Log today</div><div class="meta" style="margin-top:6px">Weight, food, steps, sleep. As much or as little as you like.</div></div></div><button class="btn primary block" type="button" data-go="log">Log today</button></div>';
   var due=T===CFG.checkInDay;
   var ci=state.checkin.sent
     ? '<div class="banner ok"><div><b>Check-in sent.</b> '+esc(CFG.coach)+' will review it.</div></div>'
@@ -816,12 +837,12 @@ function renderHome(){
 
 /* ---------- LOG ---------- */
 var NUM_FIELDS=[
- {k:'w',label:'Bodyweight',unit:'kg',step:'0.1',min:30,max:250,req:1},
- {k:'steps',label:'Steps',unit:'',step:'1',min:0,max:60000,req:1},
- {k:'p',label:'Protein',unit:'g',step:'1',min:0,max:600,req:1},
- {k:'f',label:'Fats',unit:'g',step:'1',min:0,max:400,req:1},
- {k:'c',label:'Carbs',unit:'g',step:'1',min:0,max:1000,req:1},
- {k:'kcal',label:'Calories',unit:'kcal',step:'1',min:0,max:10000,req:1},
+ {k:'w',label:'Bodyweight',unit:'kg',step:'0.1',min:30,max:250},
+ {k:'steps',label:'Steps',unit:'',step:'1',min:0,max:60000},
+ {k:'p',label:'Protein',unit:'g',step:'1',min:0,max:600},
+ {k:'f',label:'Fats',unit:'g',step:'1',min:0,max:400},
+ {k:'c',label:'Carbs',unit:'g',step:'1',min:0,max:1000},
+ {k:'kcal',label:'Calories',unit:'kcal',step:'1',min:0,max:10000},
  {k:'fluid',label:'Water',unit:'litres',step:'0.1',min:0,max:12},
  {k:'cardio',label:'Cardio',unit:'kcal',step:'1',min:0,max:3000},
  {k:'sleep',label:'Sleep',unit:'hours',step:'0.25',min:0,max:16}
@@ -830,7 +851,7 @@ var SCALES=[['hunger','Hunger','Not hungry','Starving'],['crave','Cravings','Non
 function entryFor(d){return drafts[d]||state.logs[d]||{};}
 function draftFor(d){if(!drafts[d]){drafts[d]=Object.assign({},state.logs[d]||{});}return drafts[d];}
 function numField(f,val){
-  return '<label class="field"><span class="fl">'+f.label+(f.req?'':' <i>optional</i>')+'</span><span class="inwrap"><input id="f-'+f.k+'" data-k="'+f.k+'" type="number" inputmode="decimal" step="'+f.step+'" value="'+(val==null?'':esc(val))+'"><em>'+f.unit+'</em></span><span class="ferr" id="e-'+f.k+'"></span></label>';
+  return '<label class="field"><span class="fl">'+f.label+'</span><span class="inwrap"><input id="f-'+f.k+'" data-k="'+f.k+'" type="number" inputmode="decimal" step="'+f.step+'" value="'+(val==null?'':esc(val))+'"><em>'+f.unit+'</em></span><span class="ferr" id="e-'+f.k+'"></span></label>';
 }
 function macroHint(e){
   if(e.p==null||e.f==null||e.c==null){return '';}
@@ -845,20 +866,22 @@ function renderLog(){
   var fields={};NUM_FIELDS.forEach(function(f){fields[f.k]=numField(f,e[f.k]);});
   var scales=SCALES.map(function(s){
     var btns='';for(var n=1;n<=7;n++){btns+='<button type="button" data-scale="'+s[0]+'" data-val="'+n+'" class="'+(e[s[0]]===n?'on':'')+'" aria-label="'+s[1]+' '+n+'">'+n+'</button>';}
-    return '<div class="field"><span class="fl">'+s[1]+' <i>optional</i></span><div class="scale">'+btns+'</div><div class="scale-ends"><span>'+s[2]+'</span><span>'+s[3]+'</span></div></div>';
+    return '<div class="field"><span class="fl">'+s[1]+'</span><div class="scale">'+btns+'</div><div class="scale-ends"><span>'+s[2]+'</span><span>'+s[3]+'</span></div></div>';
   }).join('');
   var saved=logSaved===logDate
-    ? '<div class="banner ok"><div><b>Saved for '+fmtDate(fromIso(logDate))+'.</b> '+(LIVE?'Preview only, so it hasn’t been sent.':esc(CFG.coach)+' can see it now.')+'</div></div>' : '';
+    ? '<div class="banner ok"><div><b>Saved for '+fmtDate(fromIso(logDate))+'.</b> '+(LIVE&&!LOGLIVE?'Preview only, so it hasn’t been sent.':esc(CFG.coach)+' can see it now.')+'</div></div>' : '';
+  var fb=state.feedback[logDate]?'<div class="card coachfb"><div class="eyebrow">Feedback from '+esc(CFG.coach)+'</div><div class="fbtext">'+esc(state.feedback[logDate])+'</div></div>':'';
   v.innerHTML=
     '<div class="title"><div class="eyebrow">Daily log</div><div class="h1">'+(logDate===todayIso?'Today':logDate===yIso?'Yesterday':fmtDate(fromIso(logDate)))+'</div></div>'+
-    previewBanner()+saved+
+    (LIVE&&!LOGLIVE?previewBanner():'')+saved+fb+
+    '<p class="hint">Log as much or as little as you like. Every box is optional.</p>'+
     '<div class="chips" id="datechips"><button class="chip'+(logDate===todayIso?' on':'')+'" type="button" data-date="'+todayIso+'">Today</button><button class="chip'+(logDate===yIso?' on':'')+'" type="button" data-date="'+yIso+'">Yesterday</button>'+
     '<label class="chip datechip'+(custom?' on':'')+'">'+ICON.cal+(custom?fmtDate(fromIso(logDate)):'Other day')+'<input id="pickdate" type="date" min="'+iso(LIVE?addDays(today,-14):startMonday)+'" max="'+todayIso+'" value="'+(custom?logDate:'')+'" aria-label="Pick another date"></label></div>'+
     '<div class="card"><div class="eyebrow">Body and food</div><div class="fgrid">'+fields.w+fields.steps+fields.p+fields.f+fields.c+fields.kcal+'<div class="field wide"><span class="hint" id="macrohint">'+macroHint(e)+'</span></div>'+fields.fluid+'</div></div>'+
     '<div class="card"><div class="eyebrow">Training</div><div class="row"><span class="fl">Session</span><span class="pill'+(sess?' good':'')+'">'+(sess?esc(sess)+' done':'None')+'</span></div><div class="fgrid">'+fields.cardio+'</div></div>'+
     '<div class="card"><div class="eyebrow">How you feel</div>'+scales+'<div class="fgrid">'+fields.sleep+'</div></div>'+
     '<div class="card"><div class="eyebrow">Off plan today?</div><div class="toggle"><button type="button" class="chip'+(e.off===false?' on':'')+'" data-off="0">No</button><button type="button" class="chip'+(e.off===true?' on':'')+'" data-off="1">Yes</button></div>'+
-    '<label class="field"><span class="fl">Notes <i>optional</i></span><textarea id="f-notes" data-k="notes" placeholder="Meal out, bad night, sore knee… anything worth knowing.">'+esc(e.notes||'')+'</textarea></label></div>'+
+    '<label class="field"><span class="fl">Notes</span><textarea id="f-notes" data-k="notes" placeholder="Meal out, bad night, sore knee… anything worth knowing.">'+esc(e.notes||'')+'</textarea></label></div>'+
     '<div id="warnbox"></div>'+
     '<button class="btn primary block" type="button" id="savelog">'+(state.logs[logDate]?'Update log':'Save log')+'</button>';
   wireLog();
@@ -878,9 +901,34 @@ function validateLog(e){
   if(!errs.kcal&&!errs.p&&!errs.f&&!errs.c&&e.kcal!=null&&e.p!=null&&e.f!=null&&e.c!=null){
     var est=e.p*4+e.c*4+e.f*9;if(est>0&&Math.abs(e.kcal-est)>0.15*est){warns.push('Calories ('+fmt(e.kcal)+') don’t match your macros (about '+fmt(est)+' kcal).');}
   }
+  var any=NUM_FIELDS.some(function(f){return e[f.k]!=null&&e[f.k]!=='';})||SCALES.some(function(x){return e[x[0]]!=null;})||e.off!=null||String(e.notes||'').trim();
+  if(!any){errs._empty='Fill in at least one thing to save a log.';}
   return {errs:errs,warns:warns};
 }
+function logPayload(e){
+  var out={};
+  NUM_FIELDS.forEach(function(f){if(e[f.k]!=null&&e[f.k]!==''){out[f.k]=e[f.k];}});
+  SCALES.forEach(function(x){if(e[x[0]]!=null){out[x[0]]=e[x[0]];}});
+  if(e.off!=null){out.off=e.off;}
+  if(String(e.notes||'').trim()){out.notes=String(e.notes).trim();}
+  return out;
+}
 function commitLog(e){
+  if(LIVE&&LOGLIVE){
+    var btn=$('#savelog');if(btn){btn.disabled=true;btn.textContent='Saving…';}
+    var d=logDate;
+    api('log',{date:d,entry:logPayload(e)},30000).then(function(j){
+      state.logs[d]=j.entry||logPayload(e);
+      if(state.logs[d].w!=null){state.weights[d]=state.logs[d].w;}else{delete state.weights[d];}
+      if(j.feedback){state.feedback[d]=j.feedback;}
+      delete drafts[d];logSaved=d;warnShown=false;
+      toast('Log saved');if(logDate===d){renderLog();}$('#main').scrollTop=0;
+    },function(err){
+      if(btn){btn.disabled=false;btn.textContent=state.logs[d]?'Update log':'Save log';}
+      $('#warnbox').innerHTML='<div class="banner warn"><div><b>Not saved.</b> '+esc((err&&err.message)||'Something went wrong. Try again.')+'</div></div>';
+    });
+    return;
+  }
   var out=Object.assign({},e);
   state.logs[logDate]=out;state.weights[logDate]=out.w;
   delete drafts[logDate];logSaved=logDate;warnShown=false;
@@ -907,7 +955,8 @@ function wireLog(){
     var e=draftFor(logDate);
     var r=validateLog(e),keys=Object.keys(r.errs);
     NUM_FIELDS.forEach(function(f){setFieldErr(f.k,r.errs[f.k]);});
-    if(keys.length){$('#warnbox').innerHTML='<div class="banner warn"><div><b>A few fields need filling in.</b></div></div>';var el=$('#f-'+keys[0]);if(el){el.scrollIntoView({block:'center',behavior:'smooth'});el.focus({preventScroll:true});}return;}
+    if(r.errs._empty){$('#warnbox').innerHTML='<div class="banner warn"><div><b>'+esc(r.errs._empty)+'</b></div></div>';return;}
+    if(keys.length){$('#warnbox').innerHTML='<div class="banner warn"><div><b>A few numbers look wrong.</b></div></div>';var el=$('#f-'+keys[0]);if(el){el.scrollIntoView({block:'center',behavior:'smooth'});el.focus({preventScroll:true});}return;}
     if(r.warns.length&&!warnShown){
       warnShown=true;
       $('#warnbox').innerHTML='<div class="banner warn"><div><b>Worth a second look</b><ul>'+r.warns.map(function(w){return '<li>'+esc(w)+'</li>';}).join('')+'</ul><div class="row" style="margin-top:12px;justify-content:flex-start"><button class="btn ghost" type="button" id="fixit">Edit</button><button class="btn primary" type="button" id="forcesave">Save anyway</button></div></div></div>';
@@ -1307,7 +1356,29 @@ function renderProgressLive(){
     '<div class="tiles"><div class="tile"><div class="eyebrow">Sessions</div><div class="num">'+completed+'<small>of '+TOTAL+'</small></div></div>'+
     '<div class="tile"><div class="eyebrow">Cycle</div><div class="num">'+Math.min(cycleNo(),CFG.cycles)+'<small>of '+CFG.cycles+'</small></div></div>'+
     '<div class="tile"><div class="eyebrow">This week</div><div class="num">'+Math.min(sessionsThisWeek(),CFG.plannedPerWeek)+'<small>of '+CFG.plannedPerWeek+'</small></div></div></div>'+
+    pbSection()+
     (cards?'<div class="eyebrow" style="margin-top:4px">Recent sessions</div>'+cards:'<div class="card"><div class="eyebrow">Recent sessions</div><div class="meta">Nothing yet. Finish your first session and your results will show here.</div></div>');
+  var more=$('#pbmore',v);if(more){more.addEventListener('click',function(){pbAll=true;renderProgressLive();});}
+}
+var pbAll=false;
+function pbSection(){
+  if(!state.pbs){return '';}
+  if(!state.pbs.length){return '<div class="card"><div class="eyebrow">Personal bests</div><div class="meta">Your bests will build up here as you train.</div></div>';}
+  var list=state.pbs.slice().sort(function(a,b){
+    var da=[a.heaviest&&a.heaviest.date,a.reps&&a.reps.date].filter(Boolean).sort().pop()||'';
+    var db=[b.heaviest&&b.heaviest.date,b.reps&&b.reps.date].filter(Boolean).sort().pop()||'';
+    return db<da?-1:db>da?1:0;
+  });
+  var shown=pbAll?list:list.slice(0,8);
+  var rows=shown.map(function(p){
+    var main='',sub='',when='';
+    if(p.heaviest){main=fmt(p.heaviest.load)+' kg <span class="meta">× '+p.heaviest.reps+'</span>';when=p.heaviest.date;
+      if(p.e1rm){sub='Est. 1RM '+fmt(p.e1rm.value)+' kg';}}
+    else if(p.reps){main=p.reps.reps+' <span class="meta">reps</span>';when=p.reps.date;sub='Bodyweight';}
+    return '<div class="pbrow"><div><b>'+esc(nice(p.exercise))+'</b><span class="meta">'+esc(sub)+(when?(sub?' · ':'')+fmtDate(fromIso(when)):'')+'</span></div><div class="pbv">'+main+'</div></div>';
+  }).join('');
+  return '<div class="eyebrow" style="margin-top:4px">Personal bests</div><div class="card pbs">'+rows+
+    (list.length>shown.length?'<button class="btn ghost block" type="button" id="pbmore">Show all '+list.length+'</button>':'')+'</div>';
 }
 
 /* ---------- routing ---------- */
