@@ -339,8 +339,14 @@ var CFG={brand:'TrainSmart Coaching',coach:'Ben',client:'Alex',cycles:8,perCycle
      previewToken is only for a private test build and must stay empty on the live site. With no api set, the app runs on sample data. */
   api:'https://script.google.com/macros/s/AKfycbzG21iPsnpDsXR1DxxErbmbZCgV5JVmExoot0nPmQru3ahJdhUGQHFTMut_GG7rYmZbrA/exec',
   previewToken:'',
-  /* The Log tab is hidden for live clients until daily logs save to the sheet. Set to true once they do. */
-  dailyLog:false};
+  /* TAB SWITCHES: what every live client sees. true = on, false = off. Home is always on.
+     To try a feature on one test client only, add it to the end of that client's link:
+       &on=log,checkin   turns those on for that client
+       &off=meals        turns those off for that client
+       &on=&off=         clears the test settings again
+     The settings are remembered on that phone, even when opened from the home-screen icon.
+     Sample-data mode always shows every tab. */
+  tabs:{train:true,meals:true,progress:true,log:false,checkin:false}};
 var LIVE=false,BOOT='demo',BOOTERR='',BOOTNORETRY=false,TOKEN='';
 var live={state:null,names:[],cur:null,key:''};
 (function(){var w=CFG.brand.split(' ');$('#brandName').innerHTML=esc(w[0])+(w.length>1?' <span>'+esc(w.slice(1).join(' '))+'</span>':'');})();
@@ -589,6 +595,28 @@ function getToken(){
   try{t=localStorage.getItem('ts_token')||'';}catch(e){}
   return t||CFG.previewToken||'';
 }
+/* Per-client test switches from the link (&on= / &off=), remembered per client on this device. */
+var TABKEYS=['log','train','meals','progress','checkin'],TESTTABS={};
+function loadTestTabs(){
+  var key='ts_tabs_'+TOKEN,q=null,saved=null;
+  try{q=new URLSearchParams(location.search);}catch(e){}
+  if(q&&(q.has('on')||q.has('off'))){
+    var t={};
+    function read(name,val){String(q.get(name)||'').toLowerCase().split(/[\s,]+/).forEach(function(k){if(TABKEYS.indexOf(k)>=0){t[k]=val;}});}
+    read('on',true);read('off',false);
+    try{if(Object.keys(t).length){localStorage.setItem(key,JSON.stringify(t));}else{localStorage.removeItem(key);}}catch(e){}
+    TESTTABS=t;return;
+  }
+  try{saved=JSON.parse(localStorage.getItem(key)||'null');}catch(e){}
+  TESTTABS=saved&&typeof saved==='object'?saved:{};
+}
+function tabOn(t){
+  if(t==='home'||!LIVE){return true;}
+  if(Object.prototype.hasOwnProperty.call(TESTTABS,t)){return !!TESTTABS[t];}
+  return CFG.tabs[t]!==false;
+}
+function testing(){return LIVE&&Object.keys(TESTTABS).length>0;}
+function firstTab(){return tabOn('train')?'train':'home';}
 function apiCall(req,ms){
   var ctl=window.AbortController?new AbortController():null;
   var timer=setTimeout(function(){if(ctl){ctl.abort();}},ms||25000);
@@ -645,9 +673,12 @@ function fetchLive(){
 }
 function setPill(){
   var p=$('#modePill'),a=$('#avatar');if(!p){return;}
-  p.hidden=BOOT!=='demo';a.hidden=!LIVE;
+  var test=testing();
+  p.hidden=BOOT!=='demo'&&!test;a.hidden=!LIVE;
+  p.textContent=test?'Test':'Demo';p.className='pill'+(test?' warn':'');
+  if(test){p.title='Test tabs: '+Object.keys(TESTTABS).map(function(k){return k+(TESTTABS[k]?' on':' off');}).join(', ');}
   if(LIVE){a.textContent=(CFG.client||'?').charAt(0).toUpperCase();a.title=CFG.client;}
-  var lg=$('#nav [data-tab="log"]');if(lg){lg.hidden=LIVE&&!CFG.dailyLog;}
+  $$('#nav [data-tab]').forEach(function(n){n.hidden=!tabOn(n.getAttribute('data-tab'));});
 }
 function startLive(){
   BOOT='loading';BOOTERR='';route();
@@ -737,7 +768,7 @@ function renderHome(){
       '<div class="h1">'+esc(s.name)+'</div>'+
       '<div class="facts">'+sessFacts(s)+'</div>'+
       '<div class="blk"><div class="row"><span>Cycle '+cycleNo()+' of '+CFG.cycles+'</span><span>'+completed+' / '+TOTAL+' sessions</span></div><div class="track"><i style="width:'+pct+'%"></i></div></div>'+
-      '<button class="btn dark block" type="button" data-go="train">Start session '+ICON.arrow+'</button></div>';
+      (tabOn('train')?'<button class="btn dark block" type="button" data-go="train">Start session '+ICON.arrow+'</button>':'')+'</div>';
   }
   var weekBlock='<div class="card"><div class="row"><div class="eyebrow">This week</div><span class="meta"><b style="color:var(--chalk)">'+Math.min(done,CFG.plannedPerWeek)+' of '+CFG.plannedPerWeek+'</b> sessions</span></div>'+
     '<div class="week">'+days+'</div>'+
@@ -763,7 +794,7 @@ function renderHome(){
       '<button class="btn ghost block" type="button" data-go="checkin">Open check-in</button></div>';
   v.innerHTML=
     '<div class="title"><div class="eyebrow">'+fmtLong(today)+'</div><div class="h1" style="font-size:36px">Good '+greet.toLowerCase()+', '+esc(CFG.client)+'</div></div>'+
-    nextCard+weekBlock+targets+(LIVE?'':logCard+ci);
+    nextCard+weekBlock+targets+(tabOn('log')?logCard:'')+(tabOn('checkin')?ci:'');
 }
 
 /* ---------- LOG ---------- */
@@ -1267,7 +1298,7 @@ var VIEWS=['home','log','train','meals','checkin','progress'];
 var RENDER={home:renderHome,log:renderLog,train:renderTrain,meals:renderMeals,checkin:renderCheckin,progress:function(){if(LIVE){renderProgressLive();}else{renderProgress();}}};
 function route(){
   var h=(location.hash||'#home').slice(1);
-  if(VIEWS.indexOf(h)<0||(LIVE&&!CFG.dailyLog&&(h==='log'||h==='checkin'))){h='home';}
+  if(VIEWS.indexOf(h)<0||!tabOn(h)){h='home';}
   if(BOOT==='loading'||BOOT==='error'){
     closeSheet();setPill();$('#nav').hidden=true;
     VIEWS.forEach(function(n){$('#view-'+n).hidden=n!=='home';});
@@ -1285,7 +1316,7 @@ document.addEventListener('click',function(ev){
   if(g){location.hash=g.dataset.go;}
 });
 window.addEventListener('hashchange',route);
-TOKEN=getToken();
+TOKEN=getToken();loadTestTabs();
 if(CFG.api&&TOKEN){startLive();}
 else if(CFG.api){BOOT='error';BOOTNORETRY=true;BOOTERR='This link isn’t complete. Open the full link '+CFG.coach+' sent you.';route();}
 else{route();}
