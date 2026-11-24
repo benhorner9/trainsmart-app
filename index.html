@@ -6,7 +6,13 @@
 <meta name="robots" content="noindex,nofollow">
 <meta name="referrer" content="no-referrer">
 <meta name="theme-color" content="#0d1b24">
-<title>TrainSmart Client App</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="TrainSmart">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<title>TrainSmart Coaching</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;800&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -38,36 +44,52 @@ a{color:inherit;text-decoration:none}
 .app{position:relative;height:100%;max-width:480px;margin:0 auto;display:flex;flex-direction:column;background:var(--ink);overflow:hidden}
 @media(min-width:520px){body{background:#08121a}.app{border-left:1px solid var(--line);border-right:1px solid var(--line)}}
 
-.top{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:calc(12px + env(safe-area-inset-top)) 16px 10px}
-.brand{display:flex;align-items:center;gap:10px;min-width:0}
-.mark{display:grid;place-items:center;width:30px;height:30px;border-radius:8px;background:var(--plate);color:var(--plate-ink);font:800 17px/1 var(--font-display);letter-spacing:.02em}
-.brandname{font:700 13px/1.1 var(--font-body);letter-spacing:.1em;text-transform:uppercase;color:var(--chalk);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.top{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:calc(14px + env(safe-area-inset-top)) 20px 12px}
+.brand{display:flex;align-items:center;gap:9px;min-width:0}
+.brand::before{content:'';width:4px;height:20px;border-radius:2px;background:var(--plate);flex:none}
+.wordmark{font:800 21px/1 var(--font-display);letter-spacing:.06em;text-transform:uppercase;color:var(--chalk);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.wordmark span{color:var(--mute);font-weight:600}
+.avatar{display:grid;place-items:center;width:34px;height:34px;border-radius:50%;background:var(--panel);border:1px solid var(--line);font:700 14px/1 var(--font-body);color:var(--chalk)}
 .pill{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;border:1px solid var(--line);font:600 12px/1.2 var(--font-body);color:var(--mute);white-space:nowrap}
 .pill.good{color:var(--good);border-color:rgba(93,211,158,.45)}
 .pill.warn{color:var(--warn);border-color:rgba(255,157,77,.5)}
 
-main{flex:1;overflow-y:auto;overscroll-behavior:contain;padding:6px 16px 28px;-webkit-overflow-scrolling:touch}
-.view{display:flex;flex-direction:column;gap:14px}
+main{flex:1;overflow-y:auto;overscroll-behavior:contain;padding:8px 20px 32px;-webkit-overflow-scrolling:touch}
+.view{display:flex;flex-direction:column;gap:16px}
 
-nav{display:grid;grid-template-columns:repeat(5,1fr);background:var(--panel);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom)}
-nav a{display:flex;flex-direction:column;align-items:center;gap:3px;padding:9px 0 8px;color:var(--mute);font:600 11px/1 var(--font-body);letter-spacing:.04em}
-nav a svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+nav{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;background:rgba(20,38,47,.92);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom)}
+nav a{display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 0 9px;color:var(--mute);font:600 11px/1 var(--font-body);letter-spacing:.02em;transition:color .15s}
+nav a svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
 nav a.on{color:var(--plate)}
 
-.eyebrow{font:700 12px/1 var(--font-body);letter-spacing:.12em;text-transform:uppercase;color:var(--mute)}
-.h1{font:800 46px/.95 var(--font-display);text-transform:uppercase;letter-spacing:.01em;text-wrap:balance}
-.h2{font:800 26px/1 var(--font-display);text-transform:uppercase;letter-spacing:.02em}
+.eyebrow{font:700 11px/1.2 var(--font-body);letter-spacing:.12em;text-transform:uppercase;color:var(--mute)}
+.h1{font:800 40px/.95 var(--font-display);text-transform:uppercase;letter-spacing:.01em;text-wrap:balance}
+.h2{font:800 24px/1 var(--font-display);text-transform:uppercase;letter-spacing:.02em}
+.title{display:flex;flex-direction:column;gap:8px;padding-top:2px}
+.title .meta{font-size:14px}
 .meta{color:var(--mute);font-size:14px}
-.hint{color:var(--mute);font-size:14px}
+.hint{color:var(--mute);font-size:13px;line-height:1.45}
 .num{font:800 34px/1 var(--font-display);letter-spacing:.01em}
 .num small{font:600 13px/1 var(--font-body);color:var(--mute);margin-left:4px;letter-spacing:0}
 
-.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:10px}
-.card.next{background:var(--plate);border-color:var(--plate);color:var(--plate-ink)}
-.card.next .eyebrow,.card.next .meta{color:rgba(36,27,0,.72)}
-.card.next .h1{font-size:54px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:12px}
+.card.next{background:var(--plate);border-color:var(--plate);color:var(--plate-ink);gap:14px}
+.card.next .eyebrow,.card.next .meta,.card.next .hint{color:rgba(36,27,0,.7)}
+.card.next .h1{font-size:56px}
+.card.quiet{background:var(--panel);border-color:var(--line);color:var(--chalk)}
+.card.quiet .eyebrow,.card.quiet .meta{color:var(--mute)}
+.card.quiet .h1{font-size:34px}
+.facts{display:flex;flex-wrap:wrap;gap:6px 14px;font:600 14px/1.2 var(--font-body)}
+.facts span{display:inline-flex;align-items:center;gap:6px}
+.facts span+span::before{content:'';width:3px;height:3px;border-radius:50%;background:currentColor;opacity:.5;margin-right:8px}
+.blk{display:flex;flex-direction:column;gap:7px}
+.blk .row{font:600 12px/1 var(--font-body);letter-spacing:.04em}
+.blk .track{height:4px;border-radius:2px;background:rgba(36,27,0,.16);overflow:hidden}
+.blk .track i{display:block;height:100%;background:var(--plate-ink);border-radius:2px}
 
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:48px;padding:0 18px;border:0;border-radius:12px;font:700 16px/1 var(--font-body);cursor:pointer}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:50px;padding:0 18px;border:0;border-radius:12px;font:700 16px/1 var(--font-body);cursor:pointer;transition:transform .12s ease,opacity .12s}
+.btn:active:not(:disabled){transform:scale(.98)}
+.btn svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
 .btn.primary{background:var(--plate);color:var(--plate-ink)}
 .btn.dark{background:var(--ink);color:var(--chalk)}
 .btn.ghost{background:transparent;border:1px solid var(--line);color:var(--chalk)}
@@ -80,17 +102,31 @@ nav a.on{color:var(--plate)}
 .tile .sub{font-size:12px;color:var(--mute);line-height:1.2}
 .tile .sub.ok{color:var(--good)}
 
-.week{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
-.day{display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 0 7px;border-radius:12px;border:1px solid var(--line);background:var(--ink);font-size:11px;color:var(--mute)}
+/* targets: one card, hairline columns */
+.macros4{display:grid;grid-template-columns:repeat(4,1fr);background:var(--panel);border:1px solid var(--line);border-radius:16px;overflow:hidden}
+.macros4>div{display:flex;flex-direction:column;gap:6px;padding:14px 12px;border-left:1px solid var(--line);min-width:0}
+.macros4>div:first-child{border-left:0}
+.macros4 .num{font-size:28px}
+.macros4 .u{font:500 12px/1 var(--font-body);color:var(--mute)}
+.macros4 .sub{font:600 11px/1.2 var(--font-body);color:var(--good)}
+.macros4+.strip{margin-top:-8px}
+.strip{display:flex;justify-content:space-between;align-items:center;padding:12px 14px;background:var(--panel);border:1px solid var(--line);border-radius:16px;font-size:14px}
+.strip b{font:800 22px/1 var(--font-display);letter-spacing:.02em}
+.strip .meta{font-size:13px}
+
+.week{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.day{display:flex;flex-direction:column;align-items:center;gap:6px;padding:9px 0 8px;border-radius:12px;font:600 11px/1 var(--font-body);color:var(--mute);letter-spacing:.02em}
 .day b{font:800 20px/1 var(--font-display);color:var(--chalk)}
-.day .dot{width:8px;height:8px;border-radius:50%;border:1.5px solid var(--line)}
-.day.done .dot{background:var(--good);border-color:var(--good)}
-.day.missed .dot{border-color:var(--warn);border-style:dashed}
-.day.today{border-color:var(--plate)}
-.day.today b{color:var(--plate)}
+.day .dot{width:6px;height:6px;border-radius:50%;background:var(--line)}
+.day.done .dot{background:var(--good)}
+.day.missed .dot{background:transparent;box-shadow:inset 0 0 0 1.5px var(--line)}
+.day.today{background:var(--ink);box-shadow:inset 0 0 0 1.5px var(--plate)}
+.day.today>span{color:var(--plate)}
 
 .bar{height:8px;border-radius:99px;background:var(--ink);border:1px solid var(--line);overflow:hidden}
 .bar>i{display:block;height:100%;background:var(--good);border-radius:99px}
+.bar>i.load{width:35%;background:var(--plate);animation:slide 1.1s ease-in-out infinite}
+@keyframes slide{from{transform:translateX(-100%)}to{transform:translateX(290%)}}
 
 .row{display:flex;align-items:center;justify-content:space-between;gap:10px}
 .stack{display:flex;flex-direction:column;gap:10px}
@@ -112,8 +148,8 @@ nav a.on{color:var(--plate)}
 .inwrap input.bad,.field textarea.bad{border-color:var(--bad)}
 .ferr,.err{font-size:12px;color:var(--bad);min-height:0}
 .ferr:empty,.err:empty{display:none}
-.scale{display:grid;grid-template-columns:repeat(10,1fr);gap:4px}
-.scale button{min-height:40px;border-radius:8px;border:1px solid var(--line);background:var(--ink);color:var(--mute);font:600 14px/1 var(--font-body);cursor:pointer;padding:0}
+.scale{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
+.scale button{min-height:42px;border-radius:10px;border:1px solid var(--line);background:var(--ink);color:var(--mute);font:600 14px/1 var(--font-body);cursor:pointer;padding:0}
 .scale button.on{background:var(--plate);border-color:var(--plate);color:var(--plate-ink)}
 .scale-ends{display:flex;justify-content:space-between;font-size:11px;color:var(--mute)}
 .toggle{display:grid;grid-template-columns:1fr 1fr;gap:8px}
@@ -123,7 +159,16 @@ nav a.on{color:var(--plate)}
 .banner.warn{border-color:rgba(255,157,77,.55)}
 .banner.warn b{color:var(--warn)}
 .banner ul{margin:6px 0 0 18px}
-.date input{min-height:40px;width:auto}
+.datechip{position:relative;display:inline-flex;align-items:center;gap:7px;overflow:hidden}
+.datechip svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.datechip input{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;border:0}
+.datechip input::-webkit-calendar-picker-indicator{position:absolute;inset:0;width:auto;height:auto;opacity:0;cursor:pointer}
+.chip{display:inline-flex;align-items:center;justify-content:center;gap:6px}
+.chip .ct{font-weight:500;opacity:.6}
+details.coach{font-size:12px;color:var(--mute);border-top:1px solid var(--line);padding-top:10px}
+details.coach summary{cursor:pointer;list-style:none;font-weight:600}
+details.coach summary::-webkit-details-marker{display:none}
+details.coach div{margin-top:6px}
 .hr{height:1px;background:var(--line);border:0}
 
 /* train */
@@ -133,7 +178,11 @@ nav a.on{color:var(--plate)}
 .ex-n{display:grid;place-items:center;width:28px;height:28px;border-radius:8px;background:var(--ink);border:1px solid var(--line);font:800 16px/1 var(--font-display);color:var(--plate);flex:none}
 .ex.done .ex-n{background:var(--good);border-color:var(--good);color:#06281a}
 .ex-head h2{font:700 17px/1.2 var(--font-body);flex:1;min-width:0}
-.demo{min-height:32px;padding:0 12px;border-radius:999px;border:1px solid var(--line);background:transparent;color:var(--mute);font:600 12px/1 var(--font-body);cursor:pointer}
+.demo{display:inline-flex;align-items:center;gap:6px;min-height:32px;padding:0 12px;border-radius:999px;border:1px solid var(--line);background:transparent;color:var(--mute);font:600 12px/1 var(--font-body);cursor:pointer}
+.demo svg{width:10px;height:10px;fill:currentColor}
+.tags{display:flex;flex-wrap:wrap;gap:6px}
+.tag{display:inline-flex;align-items:center;padding:5px 9px;border-radius:7px;background:var(--ink);border:1px solid var(--line);font:600 12px/1 var(--font-body);color:var(--mute)}
+.tag b{color:var(--chalk);font-weight:600;margin-left:4px}
 .tl{display:grid;gap:4px}
 .tl>div{display:flex;gap:10px;align-items:baseline}
 .tl dt{width:46px;flex:none;font:700 11px/1 var(--font-body);letter-spacing:.1em;text-transform:uppercase;color:var(--mute)}
@@ -208,6 +257,9 @@ th:not(:first-child),td:not(:first-child){text-align:right}
 .meal h3{font:700 19px/1.2 var(--font-body)}
 .macros{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;font:600 14px/1.2 var(--font-body);color:var(--mute)}
 .macros b{font:800 30px/1 var(--font-display);color:var(--plate);letter-spacing:.01em}
+.macros .mx{color:var(--chalk);font-weight:600}
+.macros .mx:first-of-type{margin-left:6px}
+.macros .mx i{font-style:normal;color:var(--mute);font-weight:600;margin-right:3px}
 details.amts{border-top:1px solid var(--line);padding-top:10px}
 details.amts summary{cursor:pointer;font:600 14px/1.2 var(--font-body);display:flex;justify-content:space-between;align-items:center;list-style:none;min-height:32px}
 details.amts summary::-webkit-details-marker{display:none}
@@ -237,8 +289,8 @@ details.amts li::before{content:'';position:absolute;left:0;top:9px;width:5px;he
 <body>
 <div class="app" id="app">
   <header class="top">
-    <div class="brand"><span class="mark">TS</span><span class="brandname" id="brandName">TrainSmart Coaching</span></div>
-    <span class="pill" id="modePill">Sample data</span>
+    <div class="brand"><span class="wordmark" id="brandName">TrainSmart</span></div>
+    <span class="pill" id="modePill">Demo</span><span class="avatar" id="avatar" hidden></span>
   </header>
   <main id="main">
     <section class="view" id="view-home" hidden></section>
@@ -286,10 +338,14 @@ var CFG={brand:'TrainSmart Coaching',coach:'Ben',client:'Alex',cycles:8,perCycle
   /* Live connection. api is the coach's Apps Script web app. The client's private token comes from the link (?t=...).
      previewToken is only for a private test build and must stay empty on the live site. With no api set, the app runs on sample data. */
   api:'https://script.google.com/macros/s/AKfycbzG21iPsnpDsXR1DxxErbmbZCgV5JVmExoot0nPmQru3ahJdhUGQHFTMut_GG7rYmZbrA/exec',
-  previewToken:''};
-var LIVE=false,BOOT='demo',BOOTERR='',TOKEN='';
+  previewToken:'',
+  /* The Log tab is hidden for live clients until daily logs save to the sheet. Set to true once they do. */
+  dailyLog:false};
+var LIVE=false,BOOT='demo',BOOTERR='',BOOTNORETRY=false,TOKEN='';
 var live={state:null,names:[],cur:null,key:''};
-$('#brandName').textContent=CFG.brand;
+(function(){var w=CFG.brand.split(' ');$('#brandName').innerHTML=esc(w[0])+(w.length>1?' <span>'+esc(w.slice(1).join(' '))+'</span>':'');})();
+var ICON={play:'<svg viewBox="0 0 10 10"><path d="M2 1l7 4-7 4z"/></svg>',arrow:'<svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg>',cal:'<svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>'};
+function kg(n){n=Number(n);return n%1?n.toFixed(1):String(n);}
 
 /* Sample prescription: one daily set, as in the Setup tab. Cardio is a weekly goal, done on any days. */
 var TARGETS={kcal:2230,p:180,f:70,c:220,steps:8000,cardioWeek:60};
@@ -360,10 +416,10 @@ var SESSIONS=[
   mk('Lying Leg Curl',3,10,12,2.5,35,[10,10,10],{rest:'90s',tempo:'2-1-1'}),
   mk('Standing Calf Raise',3,12,15,5,60,[14,13,12],{rest:'60s',tempo:'2-1-2'})]},
  {name:'Hyrox Sim',short:'Hyrox',type:'hyrox',format:'Half race simulation',
-  blurb:'Four 1 km runs, each followed by a station, in race order. Go straight from the station into the next run and time every split.',
+  blurb:'Four 1 km runs, each followed by a station, in race order. Go straight into the next run and time every split.',
   seg:[
-   hs('run','Run 1','1 km',null,324,330,{note:'Start at a pace you can repeat on all four runs.'}),
-   hs('stn','SkiErg','1000 m',null,271,270,{note:'Drive from the hips, then pull. Do not arm it.'}),
+   hs('run','Run 1','1 km',null,324,330,{note:'Start at a pace you can hold for all four runs.'}),
+   hs('stn','SkiErg','1000 m',null,271,270,{note:'Drive from the hips, then pull. Don’t just use your arms.'}),
    hs('run','Run 2','1 km',null,333,340),
    hs('stn','Sled Push','4 × 12.5 m',120,161,165,{note:'Low hips, short quick steps, no stopping.',loadLabel:'Sled load, kg incl. sled'}),
    hs('run','Run 3','1 km',null,341,345),
@@ -461,8 +517,8 @@ function finished(){return LIVE?live.state.status!=='ACTIVE':completed>=TOTAL;}
 function nextName(){return LIVE?(live.names[live.state.session%live.state.perCycle]||''):SESSIONS[(completed+1)%CFG.perCycle].name;}
 function lastOfBlock(){return LIVE?(live.state.cycle>=live.state.totalCycles&&live.state.session>=live.state.perCycle):completed+1>=TOTAL;}
 function finishedCard(){
-  if(LIVE&&live.state.status==='EMPTY'){return '<div class="card next"><div class="eyebrow">Programme</div><div class="h1">Nothing loaded yet</div><div class="meta">'+esc(CFG.coach)+' has not set up your programme yet. It will appear here as soon as it is ready.</div></div>';}
-  return '<div class="card next"><div class="eyebrow">Programme</div><div class="h1">Block complete</div><div class="meta">All '+CFG.cycles+' cycles done. '+esc(CFG.coach)+' will set your next block.</div></div>';
+  if(LIVE&&live.state.status==='EMPTY'){return '<div class="card quiet"><div class="eyebrow">Your programme</div><div class="h1">Coming soon</div><div class="meta">'+esc(CFG.coach)+' is building your programme. It will show here when it’s ready.</div></div>';}
+  return '<div class="card next"><div class="eyebrow">Block complete</div><div class="h1">All '+CFG.cycles+' cycles done</div><div class="meta">'+esc(CFG.coach)+' will set up your next block.</div></div>';
 }
 function weeklyRows(){
   var map={};
@@ -484,11 +540,22 @@ function sessionOn(d){var h=state.history.filter(function(x){return x.date===d;}
 function isHy(x){return !!x&&x.type==='hyrox';}
 function shortOf(name){var x=SESSIONS.filter(function(q){return q.name===name;})[0];return x?(x.short||x.name):name;}
 function wkCount(){return Math.min(sessionsThisWeek(),CFG.plannedPerWeek)+' of '+CFG.plannedPerWeek+' this week';}
+function weekChips(){var c=carriedOver();return '<div class="chips"><span class="pill">'+wkCount()+'</span>'+(c>0?'<span class="pill warn">'+c+' carried over</span>':'')+'</div>';}
+function doneMsg(name){return finished()?name+' saved. Block complete.':name+' saved · '+wkCount();}
+function sessFacts(x,noTarget){
+  var f;
+  if(isHy(x)){var runs=x.seg.filter(function(g){return g.kind==='run';}).length;f=[runs+' runs',(x.seg.length-runs)+' stations'];if(!noTarget){f.push('Target '+fmtT(x.seg.reduce(function(a,g){return a+g.plan.tgt;},0)));}}
+  else{f=[x.ex.length+' exercises',x.ex.reduce(function(a,e){return a+e.sets;},0)+' sets'];}
+  return f.map(function(t){return '<span>'+t+'</span>';}).join('');
+}
+var LDAYS=['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+var LMONTHS=['January','February','March','April','May','June','July','August','September','October','November','December'];
+function fmtLong(d){return LDAYS[dow(d)]+' '+d.getDate()+' '+LMONTHS[d.getMonth()];}
 function sessMeta(x){
   if(isHy(x)){var runs=x.seg.filter(function(g){return g.kind==='run';}).length;return runs+' runs, '+(x.seg.length-runs)+' stations · target '+fmtT(x.seg.reduce(function(a,g){return a+g.plan.tgt;},0));}
   return x.ex.length+' exercises, '+x.ex.reduce(function(a,e){return a+e.sets;},0)+' sets';
 }
-function fmtPlan(reps,load){return reps.join(' / ')+(load==null?' · bodyweight':' @ '+Number(load).toFixed(1)+' kg');}
+function fmtPlan(reps,load){return reps.join(' / ')+(load==null?' · bodyweight':' @ '+kg(load)+' kg');}
 
 /* ---------- toast + sheet ---------- */
 var toastTimer=null;
@@ -498,8 +565,22 @@ function closeSheet(){$('#sheet').hidden=true;$('#scrim').hidden=true;}
 $('#scrim').addEventListener('click',closeSheet);
 
 /* ---------- live connection to the coach's sheet ---------- */
-function previewBanner(){return LIVE?'<div class="banner warn"><div><b>Preview only.</b> This screen is not connected to your sheet yet, so nothing here is saved.</div></div>':'';}
-function nice(v){return String(v||'').toLowerCase().replace(/(^|\s)(\S)/g,function(m,a,b){return a+b.toUpperCase();});}
+function previewBanner(){return LIVE?'<div class="banner warn"><div><b>Preview only.</b> Nothing on this screen is saved yet.</div></div>':'';}
+/* Names typed in caps in the sheet ("BACK SQUAT") show as "Back Squat". Mixed-case names are left as typed. */
+var ABBR=/\b(Db|Kb|Bb|Ez|Rdl|Sldl|Sl|Ssb|Trx|Amrap|Emom|Hiit|Ohp|Rfess?|Ghr|Ski|Bw)\b/g;
+function nice(v){
+  var s=String(v||'').trim();
+  if(s!==s.toUpperCase()){return s;}
+  return s.toLowerCase().replace(/(^|[\s\-\/(])(\S)/g,function(m,a,b){return a+b.toUpperCase();}).replace(ABBR,function(m){return m==='Ski'?m:m.toUpperCase();});
+}
+function outcomeText(o){
+  var s=String(o||'').toUpperCase();
+  if(/PROGRESS/.test(s)&&/LOAD|WEIGHT/.test(s)){return 'Load goes up next time';}
+  if(/PROGRESS/.test(s)&&/REP/.test(s)){return 'Reps go up next time';}
+  if(/^REPEAT|HOLD|SAME/.test(s)){return 'Same targets next time';}
+  if(/DELOAD|REDUCE/.test(s)){return 'Load comes down next time';}
+  return nice(String(o||'').replace(/\s*[•·]\s*/g,' · '));
+}
 function dateOf(v){var d=new Date(v);return isNaN(d.getTime())?todayIso:iso(d);}
 function getToken(){
   var t='';
@@ -520,10 +601,10 @@ function apiCall(req,ms){
   }
   return fetch(url,init).then(function(r){return r.text();}).then(function(t){
     clearTimeout(timer);
-    try{return JSON.parse(t);}catch(e){throw new Error('The sheet sent back something unexpected.');}
+    try{return JSON.parse(t);}catch(e){throw new Error('Something went wrong on our end. Try again in a minute.');}
   },function(err){
     clearTimeout(timer);
-    var x=new Error(err&&err.name==='AbortError'?'The sheet took too long to answer.':'Could not reach the sheet. Check your connection and try again.');
+    var x=new Error(err&&err.name==='AbortError'?'This is taking longer than usual. Check your signal and try again.':'Couldn’t connect. Check your signal and try again.');
     x.network=true;throw x;
   });
 }
@@ -536,7 +617,7 @@ function api(action,extra,ms){
 }
 function noteFor(exs){var n=(exs||[]).length,p=(exs||[]).filter(function(e){return /^PROGRESS/.test(String(e.outcome||''));}).length;return p+' of '+n+' progressed';}
 function liveEx(e){
-  return {order:e.order,name:e.name,sets:e.sets,lo:e.repLow,hi:e.repHigh,inc:e.increment,rest:e.rest||'',tempo:'',note:e.notes||'',
+  return {order:e.order,name:nice(e.name),rawName:e.name,sets:e.sets,lo:e.repLow,hi:e.repHigh,inc:e.increment,rest:e.rest||'',tempo:'',note:e.notes||'',
     live:true,lastText:e.lastText||'',last:{reps:[],load:null,target:[]},
     plan:{target:(e.targetReps||[]).slice(),load:e.targetLoad==null?null:Number(e.targetLoad),kind:'',why:''}};
 }
@@ -545,7 +626,8 @@ function applyLive(home,sess,hist,nutr){
   var st=sess.state||home.state;
   live.state=st;
   live.names=(home.sessionNames||[]).map(nice);
-  CFG.client=String((home.client&&home.client.name)||'').trim().split(/\s+/)[0]||'there';
+  var fn=nice(String((home.client&&home.client.name)||'').trim().split(/\s+/)[0]);
+  CFG.client=fn?fn.charAt(0).toUpperCase()+fn.slice(1):'there';
   CFG.cycles=st.totalCycles||CFG.cycles;CFG.perCycle=st.perCycle||CFG.perCycle;CFG.plannedPerWeek=CFG.perCycle;
   completed=st.completedSessions||0;TOTAL=(st.totalCycles||0)*(st.perCycle||0);
   state.history=((hist&&hist.sessions)||[]).slice().reverse().map(function(h){
@@ -561,7 +643,12 @@ function applyLive(home,sess,hist,nutr){
 function fetchLive(){
   return Promise.all([api('home'),api('session'),api('history'),api('nutrition').catch(function(e){return {ok:false,error:(e&&e.code)||'error',message:(e&&e.message)||''};})]).then(function(r){applyLive(r[0],r[1],r[2],r[3]);});
 }
-function setPill(){var p=$('#modePill');if(!p){return;}if(LIVE){p.textContent='Live';p.className='pill good';}else{p.textContent='Sample data';p.className='pill';}}
+function setPill(){
+  var p=$('#modePill'),a=$('#avatar');if(!p){return;}
+  p.hidden=BOOT!=='demo';a.hidden=!LIVE;
+  if(LIVE){a.textContent=(CFG.client||'?').charAt(0).toUpperCase();a.title=CFG.client;}
+  var lg=$('#nav [data-tab="log"]');if(lg){lg.hidden=LIVE&&!CFG.dailyLog;}
+}
 function startLive(){
   BOOT='loading';BOOTERR='';route();
   return fetchLive().then(function(){
@@ -569,9 +656,10 @@ function startLive(){
   },function(e){BOOT='error';BOOTERR=(e&&e.message)||'Could not load your programme.';route();});
 }
 function bootHtml(){
-  if(BOOT==='loading'){return '<div class="card next"><div class="eyebrow">One moment</div><div class="h1">Loading your programme</div><div class="meta">Getting the latest from your coach’s sheet…</div></div>';}
-  return '<div class="card next"><div class="eyebrow">Connection</div><div class="h1">Could not load</div><div class="meta">'+esc(BOOTERR)+'</div><button class="btn primary block" type="button" id="bootretry">Try again</button>'+
-    (CFG.previewToken?'<button class="btn ghost block" type="button" id="bootdemo">Look at sample data instead</button>':'')+'</div>';
+  if(BOOT==='loading'){return '<div class="card quiet"><div class="eyebrow">One moment</div><div class="h1">Loading your programme</div><div class="bar"><i class="load"></i></div></div>';}
+  return '<div class="card quiet"><div class="eyebrow">'+(BOOTNORETRY?'Can’t open the app':'Connection problem')+'</div><div class="h1">'+(BOOTNORETRY?'Check your link':'Couldn’t load')+'</div><div class="meta">'+esc(BOOTERR)+'</div>'+
+    (BOOTNORETRY?'':'<button class="btn primary block" type="button" id="bootretry">Try again</button>')+
+    (CFG.previewToken?'<button class="btn ghost block" type="button" id="bootdemo">View the demo instead</button>':'')+'</div>';
 }
 function wireBoot(){
   var r=$('#bootretry');if(r){r.addEventListener('click',startLive);}
@@ -579,27 +667,27 @@ function wireBoot(){
 }
 function sheetError(e,retry){
   var stale=e&&e.code==='stale';
-  openSheet('<div class="h2">'+(stale?'Your session has changed':'That did not go through')+'</div><div class="meta">'+esc((e&&e.message)||'Something went wrong.')+(e&&e.network?' Your numbers are still on screen, nothing has been lost.':'')+'</div>'+
+  openSheet('<div class="h2">'+(stale?'Your session has been updated':'That didn’t save')+'</div><div class="meta">'+esc((e&&e.message)||'Something went wrong.')+(e&&e.network?' Your numbers are still here.':'')+'</div>'+
     (stale?'<button class="btn primary block" type="button" id="reloadlive">Reload</button>':'<button class="btn primary block" type="button" id="retry">Try again</button>')+
-    '<button class="btn ghost block" type="button" id="backto">Back to session</button>');
+    '<button class="btn ghost block" type="button" id="backto">Back</button>');
   $('#backto').addEventListener('click',closeSheet);
   var r=$('#retry');if(r){r.addEventListener('click',retry);}
   var rl=$('#reloadlive');if(rl){rl.addEventListener('click',function(){closeSheet();train.inputs={};live.key='';startLive();});}
 }
 function entriesNow(){
-  return curSession().ex.map(function(ex,i){var d=inp(i);return {order:ex.order,name:ex.name,reps:d.reps.map(Number),load:d.load===''?null:Number(d.load)};});
+  return curSession().ex.map(function(ex,i){var d=inp(i);return {order:ex.order,name:ex.rawName||ex.name,reps:d.reps.map(Number),load:d.load===''?null:Number(d.load)};});
 }
 function openLiveSummary(){
   var s=curSession(),entries=entriesNow();
-  openSheet('<div class="h2">Checking '+esc(s.name)+'</div><div class="meta">Working out your next targets…</div>');
+  openSheet('<div class="h2">'+esc(s.name)+'</div><div class="meta">Working out your next targets…</div><div class="bar"><i class="load"></i></div>');
   api('preview',{entries:entries},30000).then(function(j){
     var rows=(j.results||[]).map(function(r,i){
       var d=entries[i]||{reps:[],load:null};
-      return '<div class="sum"><b>'+esc(r.name)+'</b><span>Done '+fmtPlan(d.reps,d.load)+'</span><span class="nx">Next: '+fmtPlan((r.nextReps||[]).slice(0,r.nextSets),r.nextLoad)+'</span><span class="why">'+esc(r.feedback||r.outcome||'')+'</span></div>';
+      return '<div class="sum"><b>'+esc(nice(r.name))+'</b><span>Done '+fmtPlan(d.reps,d.load)+'</span><span class="nx">Next '+fmtPlan((r.nextReps||[]).slice(0,r.nextSets),r.nextLoad)+'</span><span class="why">'+esc(r.feedback||outcomeText(r.outcome))+'</span></div>';
     }).join('');
     var nn=nextName();
-    openSheet('<div class="h2">Log '+esc(s.name)+'?</div><div class="meta">This saves the session to your sheet and sets your next targets. '+(lastOfBlock()?'That finishes your block.':(nn?'Next up: '+esc(nn)+'.':''))+'</div>'+rows+
-      '<button class="btn primary block" type="button" id="confirmdone">Log session and load next</button><button class="btn ghost block" type="button" id="backto">Back to session</button>');
+    openSheet('<div class="h2">Finish '+esc(s.name)+'?</div><div class="meta">Here’s what you did and what’s next. '+(lastOfBlock()?'This finishes your block.':(nn?'Up next: '+esc(nn)+'.':''))+'</div>'+rows+
+      '<button class="btn primary block" type="button" id="confirmdone">Save session</button><button class="btn ghost block" type="button" id="backto">Back</button>');
     $('#backto').addEventListener('click',closeSheet);
     $('#confirmdone').addEventListener('click',function(ev){commitLive(ev.currentTarget);});
   },function(e){sheetError(e,openLiveSummary);});
@@ -607,16 +695,16 @@ function openLiveSummary(){
 function commitLive(btn){
   if(live.busy){return;}
   live.busy=true;
-  if(btn){btn.disabled=true;btn.textContent='Saving to your sheet…';}
+  if(btn){btn.disabled=true;btn.textContent='Saving…';}
   var s=curSession(),name=s.name,cy=live.state.cycle,se=live.state.session,entries=entriesNow();
   api('complete',{cycle:cy,session:se,entries:entries},60000).then(function(){
     train.inputs={};
     return fetchLive().then(function(){
       live.busy=false;closeSheet();
-      toast(name+' logged ('+wkCount()+')'+(finished()?'. Block complete.':'. '+curSession().name+' is loaded.'));
+      toast(doneMsg(name));
       route();$('#main').scrollTop=0;
     },function(){
-      live.busy=false;closeSheet();BOOT='error';BOOTERR='Your session was saved. The next one could not be loaded yet.';route();
+      live.busy=false;closeSheet();BOOT='error';BOOTERR='Your session is saved. Your next one didn’t load, so try again.';route();
     });
   },function(e){live.busy=false;sheetError(e,function(){commitLive(null);});});
 }
@@ -635,7 +723,7 @@ function renderHome(){
     if(state.logs[k]){cls+=' done';}else if(i<T&&!LIVE){cls+=' missed';}
     if(ss){cls+=' trained';}
     if(i===T){cls+=' today';}
-    days+='<div class="'+cls+'"><span>'+DAYS[i]+'</span><b>'+dd.getDate()+'</b><div class="trs">'+(ss||'<span class="tr none">&nbsp;</span>')+'</div><i class="dot"></i></div>';
+    days+='<div class="'+cls+'"><span>'+DAYS[i]+'</span><b>'+dd.getDate()+'</b><div class="trs">'+(ss||'<span class="tr none">&nbsp;</span>')+'</div>'+(LIVE?'':'<i class="dot"></i>')+'</div>';
   }
   var logged=thisWeekLogs().length;
   var s=curSession(), done=sessionsThisWeek(), car=carriedOver();
@@ -643,37 +731,39 @@ function renderHome(){
   if(finished()){
     nextCard=finishedCard();
   }else{
-    nextCard='<div class="card next"><div class="eyebrow">Next session</div><div class="h1">'+esc(s.name)+'</div>'+
-      (car>0?'<div><span class="pill">'+car+' carried over from last week</span></div>':'')+
-      '<div class="meta">Cycle '+cycleNo()+' of '+CFG.cycles+' · Session '+sessNo()+' of '+CFG.perCycle+' · '+sessMeta(s)+'</div>'+
-      '<div class="meta">'+completed+' of '+TOTAL+' sessions completed. Do it on whichever day suits you.</div>'+
-      '<button class="btn dark block" type="button" data-go="train">Open session</button></div>';
+    var pct=TOTAL?Math.round(completed/TOTAL*100):0;
+    nextCard='<div class="card next"><div class="row"><div class="eyebrow">Up next · Session '+sessNo()+' of '+CFG.perCycle+'</div>'+
+      (car>0?'<span class="pill">'+car+' carried over</span>':'')+'</div>'+
+      '<div class="h1">'+esc(s.name)+'</div>'+
+      '<div class="facts">'+sessFacts(s)+'</div>'+
+      '<div class="blk"><div class="row"><span>Cycle '+cycleNo()+' of '+CFG.cycles+'</span><span>'+completed+' / '+TOTAL+' sessions</span></div><div class="track"><i style="width:'+pct+'%"></i></div></div>'+
+      '<button class="btn dark block" type="button" data-go="train">Start session '+ICON.arrow+'</button></div>';
   }
-  var pips='';for(var p=0;p<CFG.plannedPerWeek;p++){pips+='<i class="pip'+(p<done?' on':'')+'"></i>';}
-  var weekBlock='<div class="card"><div class="row"><div class="h2" style="font-size:22px">Sessions this week</div><span class="num" style="font-size:28px">'+Math.min(done,CFG.plannedPerWeek)+'<small>of '+CFG.plannedPerWeek+'</small></span></div>'+
-    '<div class="pips" style="--n:'+CFG.plannedPerWeek+'">'+pips+'</div>'+
-    '<div class="meta">Train on any days you like. If you miss one, it carries over and stays next in line.</div>'+
-    '<div class="week">'+days+'</div><div class="hint" style="font-size:12px">Green block: the session you trained that day.'+(LIVE?'':' Dot: day logged.')+'</div></div>';
-  var tiles=[
-    ['Calories',fv(tg&&tg.kcal),'kcal',todayLog?fmt(todayLog.kcal)+' logged':'',1],
-    ['Protein',fv(tg&&tg.p),'g',todayLog?todayLog.p+' logged':'',1],
-    ['Carbs',fv(tg&&tg.c),'g',todayLog?todayLog.c+' logged':'',1],
-    ['Fats',fv(tg&&tg.f),'g',todayLog?todayLog.f+' logged':'',1],
-    ['Steps',fv(tg&&tg.steps),'',todayLog?fmt(todayLog.steps)+' logged':'',1],
-    ['Cardio',TARGETS.cardioWeek,'min / wk','any days',0]
-  ].slice(0,LIVE?5:6).map(function(t){return '<div class="tile"><div class="eyebrow">'+t[0]+'</div><div class="num">'+t[1]+'<small>'+t[2]+'</small></div><div class="sub'+(t[3]&&t[4]?' ok':'')+'">'+(t[3]||'&nbsp;')+'</div></div>';}).join('');
+  var weekBlock='<div class="card"><div class="row"><div class="eyebrow">This week</div><span class="meta"><b style="color:var(--chalk)">'+Math.min(done,CFG.plannedPerWeek)+' of '+CFG.plannedPerWeek+'</b> sessions</span></div>'+
+    '<div class="week">'+days+'</div>'+
+    '<div class="hint">Train on any days. A missed session carries over.</div></div>';
+  var targets='';
+  if(tg){
+    targets='<div class="stack"><div class="eyebrow">Daily targets</div><div class="macros4">'+
+      [['Calories',tg.kcal,'kcal',todayLog&&fmt(todayLog.kcal)],['Protein',tg.p,'g',todayLog&&todayLog.p],['Carbs',tg.c,'g',todayLog&&todayLog.c],['Fats',tg.f,'g',todayLog&&todayLog.f]]
+        .map(function(t){return '<div><span class="eyebrow">'+t[0]+'</span><span class="num">'+fv(t[1])+'</span><span class="u">'+t[2]+'</span>'+(t[3]!=null&&t[3]!==undefined&&todayLog&&!LIVE?'<span class="sub">'+t[3]+' logged</span>':'')+'</div>';}).join('')+
+      '</div>'+
+      (tg.steps?'<div class="strip"><span class="eyebrow">Steps</span><span><b>'+fv(tg.steps)+'</b> <span class="meta">a day</span></span></div>':'')+
+      (!LIVE?'<div class="strip"><span class="eyebrow">Cardio</span><span><b>'+TARGETS.cardioWeek+'</b> <span class="meta">min a week</span></span></div>':'')+
+      '</div>';
+  }
   var logCard=todayLog
-    ? '<div class="banner ok"><div><b>Today is logged.</b> Nice one. You can still update it on the Log tab.</div></div>'
-    : '<div class="card"><div class="row"><div><div class="h2">Log today</div><div class="meta">Weight, food, steps, sleep. About a minute.</div></div></div><button class="btn primary block" type="button" data-go="log">Log my day</button></div>';
+    ? '<div class="banner ok"><div><b>Today is logged.</b> You can still edit it on the Log tab.</div></div>'
+    : '<div class="card"><div class="row"><div><div class="h2">Log today</div><div class="meta" style="margin-top:6px">Weight, food, steps and sleep.</div></div></div><button class="btn primary block" type="button" data-go="log">Log today</button></div>';
+  var due=T===CFG.checkInDay;
   var ci=state.checkin.sent
     ? '<div class="banner ok"><div><b>Check-in sent.</b> '+esc(CFG.coach)+' will review it.</div></div>'
-    : '<div class="card"><div class="row"><div class="h2">Weekly check-in</div><span class="pill'+(T===CFG.checkInDay?' warn':'')+'">'+(T===CFG.checkInDay?'Due today':'Due Sunday')+'</span></div>'+
-      '<div class="meta">'+logged+' of 7 days logged this week</div><div class="bar"><i style="width:'+Math.round(logged/7*100)+'%"></i></div>'+
+    : '<div class="card"><div class="row"><div class="h2">Weekly check-in</div><span class="pill'+(due?' warn':'')+'">'+(due?'Due today':'Due Sunday')+'</span></div>'+
+      '<div class="row meta"><span>Days logged</span><span>'+logged+' of 7</span></div><div class="bar"><i style="width:'+Math.round(logged/7*100)+'%"></i></div>'+
       '<button class="btn ghost block" type="button" data-go="checkin">Open check-in</button></div>';
   v.innerHTML=
-    '<div><div class="eyebrow">'+fmtDate(today)+' · Week '+THIS_WEEK+'</div><div class="h1" style="margin-top:8px;font-size:38px">Good '+greet.toLowerCase()+',<br>'+esc(CFG.client)+'</div></div>'+
-    nextCard+weekBlock+
-    (LIVE&&!tg?'':'<div class="stack"><div class="eyebrow">Daily targets</div><div class="tiles">'+tiles+'</div></div>')+(LIVE?'':logCard+ci);
+    '<div class="title"><div class="eyebrow">'+fmtLong(today)+'</div><div class="h1" style="font-size:36px">Good '+greet.toLowerCase()+', '+esc(CFG.client)+'</div></div>'+
+    nextCard+weekBlock+targets+(LIVE?'':logCard+ci);
 }
 
 /* ---------- LOG ---------- */
@@ -684,11 +774,11 @@ var NUM_FIELDS=[
  {k:'f',label:'Fats',unit:'g',step:'1',min:0,max:400,req:1},
  {k:'c',label:'Carbs',unit:'g',step:'1',min:0,max:1000,req:1},
  {k:'kcal',label:'Calories',unit:'kcal',step:'1',min:0,max:10000,req:1},
- {k:'fluid',label:'Fluid intake',unit:'litres',step:'0.1',min:0,max:12},
- {k:'cardio',label:'Cardio',unit:'kcal burned',step:'1',min:0,max:3000},
- {k:'sleep',label:'Sleep duration',unit:'hours',step:'0.25',min:0,max:16}
+ {k:'fluid',label:'Water',unit:'litres',step:'0.1',min:0,max:12},
+ {k:'cardio',label:'Cardio',unit:'kcal',step:'1',min:0,max:3000},
+ {k:'sleep',label:'Sleep',unit:'hours',step:'0.25',min:0,max:16}
 ];
-var SCALES=[['hunger','Hunger','Not hungry','Starving'],['crave','Cravings','None','Intense'],['sore','Muscle soreness','None','Very sore'],['energy','Energy','Flat','Great'],['stress','Stress','Calm','Maxed'],['sleepq','Quality of sleep','Poor','Great']];
+var SCALES=[['hunger','Hunger','Not hungry','Starving'],['crave','Cravings','None','Intense'],['sore','Muscle soreness','None','Very sore'],['energy','Energy','Flat','Great'],['stress','Stress','Calm','Maxed'],['sleepq','Sleep quality','Poor','Great']];
 function entryFor(d){return drafts[d]||state.logs[d]||{};}
 function draftFor(d){if(!drafts[d]){drafts[d]=Object.assign({},state.logs[d]||{});}return drafts[d];}
 function numField(f,val){
@@ -696,7 +786,7 @@ function numField(f,val){
 }
 function macroHint(e){
   if(e.p==null||e.f==null||e.c==null){return '';}
-  return 'Your macros add up to about '+fmt(e.p*4+e.c*4+e.f*9)+' kcal.';
+  return 'Your macros come to about '+fmt(e.p*4+e.c*4+e.f*9)+' kcal.';
 }
 function renderLog(){
   var v=$('#view-log');
@@ -710,19 +800,19 @@ function renderLog(){
     return '<div class="field"><span class="fl">'+s[1]+' <i>optional</i></span><div class="scale">'+btns+'</div><div class="scale-ends"><span>'+s[2]+'</span><span>'+s[3]+'</span></div></div>';
   }).join('');
   var saved=logSaved===logDate
-    ? '<div class="banner ok"><div><b>Saved for '+fmtDate(fromIso(logDate))+'.</b> '+(LIVE?'Preview only, so it has not gone to the sheet.':'Nice one. It is on '+esc(CFG.coach)+'’s sheet now.')+'</div></div>' : '';
+    ? '<div class="banner ok"><div><b>Saved for '+fmtDate(fromIso(logDate))+'.</b> '+(LIVE?'Preview only, so it hasn’t been sent.':esc(CFG.coach)+' can see it now.')+'</div></div>' : '';
   v.innerHTML=
-    '<div><div class="eyebrow">Log my day</div><div class="h1" style="margin-top:8px">'+(logDate===todayIso?'Today':fmtDate(fromIso(logDate)))+'</div></div>'+
+    '<div class="title"><div class="eyebrow">Daily log</div><div class="h1">'+(logDate===todayIso?'Today':logDate===yIso?'Yesterday':fmtDate(fromIso(logDate)))+'</div></div>'+
     previewBanner()+saved+
     '<div class="chips" id="datechips"><button class="chip'+(logDate===todayIso?' on':'')+'" type="button" data-date="'+todayIso+'">Today</button><button class="chip'+(logDate===yIso?' on':'')+'" type="button" data-date="'+yIso+'">Yesterday</button>'+
-    '<span class="date"><input id="pickdate" type="date" min="'+iso(LIVE?addDays(today,-14):startMonday)+'" max="'+todayIso+'" value="'+(custom?logDate:'')+'" aria-label="Pick another date"></span></div>'+
+    '<label class="chip datechip'+(custom?' on':'')+'">'+ICON.cal+(custom?fmtDate(fromIso(logDate)):'Other day')+'<input id="pickdate" type="date" min="'+iso(LIVE?addDays(today,-14):startMonday)+'" max="'+todayIso+'" value="'+(custom?logDate:'')+'" aria-label="Pick another date"></label></div>'+
     '<div class="card"><div class="eyebrow">Body and food</div><div class="fgrid">'+fields.w+fields.steps+fields.p+fields.f+fields.c+fields.kcal+'<div class="field wide"><span class="hint" id="macrohint">'+macroHint(e)+'</span></div>'+fields.fluid+'</div></div>'+
-    '<div class="card"><div class="eyebrow">Training and cardio</div><div class="row"><span class="fl">Session</span><span class="pill'+(sess?' good':'')+'">'+(sess?esc(sess)+' · from Train':'None logged')+'</span></div><div class="fgrid">'+fields.cardio+'</div></div>'+
-    '<div class="card"><div class="eyebrow">How you felt</div>'+scales+'<div class="fgrid">'+fields.sleep+'</div></div>'+
-    '<div class="card"><div class="eyebrow">Off plan?</div><div class="toggle"><button type="button" class="chip'+(e.off===false?' on':'')+'" data-off="0">No</button><button type="button" class="chip'+(e.off===true?' on':'')+'" data-off="1">Yes, had something</button></div>'+
-    '<label class="field"><span class="fl">Anything relevant? Slip-ups and why <i>optional</i></span><textarea id="f-notes" data-k="notes">'+esc(e.notes||'')+'</textarea></label></div>'+
+    '<div class="card"><div class="eyebrow">Training</div><div class="row"><span class="fl">Session</span><span class="pill'+(sess?' good':'')+'">'+(sess?esc(sess)+' done':'None')+'</span></div><div class="fgrid">'+fields.cardio+'</div></div>'+
+    '<div class="card"><div class="eyebrow">How you feel</div>'+scales+'<div class="fgrid">'+fields.sleep+'</div></div>'+
+    '<div class="card"><div class="eyebrow">Off plan today?</div><div class="toggle"><button type="button" class="chip'+(e.off===false?' on':'')+'" data-off="0">No</button><button type="button" class="chip'+(e.off===true?' on':'')+'" data-off="1">Yes</button></div>'+
+    '<label class="field"><span class="fl">Notes <i>optional</i></span><textarea id="f-notes" data-k="notes" placeholder="Meal out, bad night, sore knee… anything worth knowing.">'+esc(e.notes||'')+'</textarea></label></div>'+
     '<div id="warnbox"></div>'+
-    '<button class="btn primary block" type="button" id="savelog">'+(state.logs[logDate]?'Update my day':'Save my day')+'</button>';
+    '<button class="btn primary block" type="button" id="savelog">'+(state.logs[logDate]?'Update log':'Save log')+'</button>';
   wireLog();
 }
 function setFieldErr(k,msg){var el=$('#e-'+k),inp=$('#f-'+k);if(el){el.textContent=msg||'';}if(inp){inp.classList.toggle('bad',!!msg);}}
@@ -730,15 +820,15 @@ function validateLog(e){
   var errs={},warns=[];
   NUM_FIELDS.forEach(function(f){
     var val=e[f.k];
-    if(val==null||val===''){if(f.req){errs[f.k]='Required.';}return;}
-    if(val<f.min||val>f.max){errs[f.k]='Enter a number from '+f.min+' to '+f.max+'.';}
+    if(val==null||val===''){if(f.req){errs[f.k]='Needed';}return;}
+    if(val<f.min||val>f.max){errs[f.k]='Between '+f.min+' and '+f.max;}
   });
   if(!errs.w&&e.w!=null){
     var prior=Object.keys(state.weights).filter(function(k){return k<logDate;}).sort().slice(-7).map(function(k){return state.weights[k];});
-    if(prior.length>=3){var a=avg(prior);if(Math.abs(e.w-a)>2){warns.push('Bodyweight '+e.w+' kg is '+Math.abs(e.w-a).toFixed(1)+' kg away from your recent average of '+a.toFixed(1)+' kg. Check the number.');}}
+    if(prior.length>=3){var a=avg(prior);if(Math.abs(e.w-a)>2){warns.push(e.w+' kg is '+Math.abs(e.w-a).toFixed(1)+' kg off your recent average of '+a.toFixed(1)+' kg.');}}
   }
   if(!errs.kcal&&!errs.p&&!errs.f&&!errs.c&&e.kcal!=null&&e.p!=null&&e.f!=null&&e.c!=null){
-    var est=e.p*4+e.c*4+e.f*9;if(est>0&&Math.abs(e.kcal-est)>0.15*est){warns.push('Calories ('+fmt(e.kcal)+') and macros (about '+fmt(est)+' kcal) differ by more than 15%.');}
+    var est=e.p*4+e.c*4+e.f*9;if(est>0&&Math.abs(e.kcal-est)>0.15*est){warns.push('Calories ('+fmt(e.kcal)+') don’t match your macros (about '+fmt(est)+' kcal).');}
   }
   return {errs:errs,warns:warns};
 }
@@ -746,7 +836,7 @@ function commitLog(e){
   var out=Object.assign({},e);
   state.logs[logDate]=out;state.weights[logDate]=out.w;
   delete drafts[logDate];logSaved=logDate;warnShown=false;
-  toast(LIVE?'Saved in preview only':'Day saved');renderLog();$('#main').scrollTop=0;
+  toast(LIVE?'Saved in preview only':'Log saved');renderLog();$('#main').scrollTop=0;
 }
 function wireLog(){
   var v=$('#view-log');
@@ -769,10 +859,10 @@ function wireLog(){
     var e=draftFor(logDate);
     var r=validateLog(e),keys=Object.keys(r.errs);
     NUM_FIELDS.forEach(function(f){setFieldErr(f.k,r.errs[f.k]);});
-    if(keys.length){$('#warnbox').innerHTML='<div class="banner warn"><div><b>Check the highlighted fields.</b></div></div>';var el=$('#f-'+keys[0]);if(el){el.scrollIntoView({block:'center',behavior:'smooth'});el.focus({preventScroll:true});}return;}
+    if(keys.length){$('#warnbox').innerHTML='<div class="banner warn"><div><b>A few fields need filling in.</b></div></div>';var el=$('#f-'+keys[0]);if(el){el.scrollIntoView({block:'center',behavior:'smooth'});el.focus({preventScroll:true});}return;}
     if(r.warns.length&&!warnShown){
       warnShown=true;
-      $('#warnbox').innerHTML='<div class="banner warn"><div><b>Worth a second look</b><ul>'+r.warns.map(function(w){return '<li>'+esc(w)+'</li>';}).join('')+'</ul><div class="row" style="margin-top:12px;justify-content:flex-start"><button class="btn ghost" type="button" id="fixit">Fix numbers</button><button class="btn primary" type="button" id="forcesave">Save anyway</button></div></div></div>';
+      $('#warnbox').innerHTML='<div class="banner warn"><div><b>Worth a second look</b><ul>'+r.warns.map(function(w){return '<li>'+esc(w)+'</li>';}).join('')+'</ul><div class="row" style="margin-top:12px;justify-content:flex-start"><button class="btn ghost" type="button" id="fixit">Edit</button><button class="btn primary" type="button" id="forcesave">Save anyway</button></div></div></div>';
       $('#fixit').addEventListener('click',function(){warnShown=false;$('#warnbox').innerHTML='';$('#f-w').focus();});
       $('#forcesave').addEventListener('click',function(){commitLog(draftFor(logDate));});
       $('#warnbox').scrollIntoView({block:'center',behavior:'smooth'});
@@ -803,16 +893,16 @@ function rowState(i){
 function exCard(ex,i){
   var d=inp(i),max=maxReps(ex);
   var sets=d.reps.map(function(r,k){
-    return '<label class="setf"><span>Set '+(k+1)+' · aim '+ex.plan.target[k]+'</span><input type="number" inputmode="numeric" min="0" max="'+max+'" step="1" data-ex="'+i+'" data-set="'+k+'" value="'+esc(r)+'" placeholder="reps" aria-label="'+esc(ex.name)+' set '+(k+1)+' reps"></label>';
+    return '<label class="setf"><span>Set '+(k+1)+'</span><input type="number" inputmode="numeric" min="0" max="'+max+'" step="1" data-ex="'+i+'" data-set="'+k+'" value="'+esc(r)+'" placeholder="'+esc(ex.plan.target[k])+'" aria-label="'+esc(ex.name)+' set '+(k+1)+' reps"></label>';
   }).join('');
   var fb='';
   return '<article class="card ex" id="ex-'+i+'" data-ex="'+i+'">'+
-    '<div class="ex-head"><span class="ex-n">'+(i+1)+'</span><h2>'+esc(ex.name)+'</h2>'+(ex.live?'':'<button class="demo" type="button" data-demo="'+i+'">▶ Demo</button>')+'</div>'+
-    '<dl class="tl"><div class="tgt"><dt>Target</dt><dd>'+fmtPlan(ex.plan.target,ex.plan.load)+'</dd></div><div><dt>Last</dt><dd>'+(ex.live?esc(ex.lastText||'First attempt'):fmtPlan(ex.last.reps,ex.last.load))+'</dd></div></dl>'+
-    ((ex.rest||ex.tempo)?'<div class="ex-meta">'+[ex.rest?'Rest '+esc(ex.rest):'',ex.tempo?'tempo '+esc(ex.tempo):''].filter(Boolean).join(' · ')+'</div>':'')+(ex.note?'<div class="ex-note">'+esc(ex.note)+'</div>':'')+
-    '<div class="sets'+(ex.sets>=5?' wrap':'')+'" style="--n:'+ex.sets+';--c:'+(ex.sets===5?3:4)+'">'+sets+'<label class="setf"><span>Load kg</span><input type="number" inputmode="decimal" step="0.5" min="0" data-ex="'+i+'" data-load="1" value="'+esc(d.load)+'" '+(ex.plan.load==null?'placeholder="none"':'')+' aria-label="'+esc(ex.name)+' load in kilograms"></label></div>'+
+    '<div class="ex-head"><span class="ex-n">'+(i+1)+'</span><h2>'+esc(ex.name)+'</h2>'+(ex.live?'':'<button class="demo" type="button" data-demo="'+i+'">'+ICON.play+'Demo</button>')+'</div>'+
+    '<dl class="tl"><div class="tgt"><dt>Target</dt><dd>'+fmtPlan(ex.plan.target,ex.plan.load)+'</dd></div><div><dt>Last</dt><dd>'+(ex.live?esc(ex.lastText?ex.lastText.replace(/(\d+)\.0\b/g,'$1'):'First time'):fmtPlan(ex.last.reps,ex.last.load))+'</dd></div></dl>'+
+    ((ex.rest||ex.tempo)?'<div class="tags">'+(ex.rest?'<span class="tag">Rest<b>'+esc(ex.rest)+'</b></span>':'')+(ex.tempo?'<span class="tag">Tempo<b>'+esc(ex.tempo)+'</b></span>':'')+'</div>':'')+(ex.note?'<div class="ex-note">'+esc(ex.note)+'</div>':'')+
+    '<div class="sets'+(ex.sets>=5?' wrap':'')+'" style="--n:'+ex.sets+';--c:'+(ex.sets===5?3:4)+'">'+sets+'<label class="setf"><span>kg</span><input type="number" inputmode="decimal" step="0.5" min="0" data-ex="'+i+'" data-load="1" value="'+esc(d.load)+'" '+(ex.plan.load==null?'placeholder="BW"':'')+' aria-label="'+esc(ex.name)+' load in kilograms"></label></div>'+
     '<div class="err" id="err-'+i+'" role="alert"></div>'+
-    '<div class="fb" role="group" aria-label="How did it feel">'+fb+'<span class="rowstate" id="rs-'+i+'"></span></div></article>';
+    '<div class="fb">'+fb+'<span class="rowstate" id="rs-'+i+'"></span></div></article>';
 }
 function renderTrain(){
   var v=$('#view-train');
@@ -820,12 +910,11 @@ function renderTrain(){
   var s=curSession();
   if(isHy(s)){renderHyrox(s);return;}
   v.innerHTML=
-    '<div><div class="eyebrow">Progressive training</div><div class="h1" style="margin-top:8px">'+esc(s.name)+'</div>'+
-    '<div class="meta" style="margin-top:8px">Cycle '+cycleNo()+' of '+CFG.cycles+' · Session '+sessNo()+' of '+CFG.perCycle+' · '+completed+' of '+TOTAL+' sessions completed</div></div>'+
-    '<div class="chips"><span class="pill">This week: '+Math.min(sessionsThisWeek(),CFG.plannedPerWeek)+' of '+CFG.plannedPerWeek+' sessions</span>'+(carriedOver()>0?'<span class="pill warn">'+carriedOver()+' carried over</span>':'')+'</div>'+
-    '<p class="hint">Train on any day that suits you. Your next session is always the next one in order, so a missed one waits for you. Enter reps for each set, and use 0 only if you tried a set and got no reps. Leave the load blank for bodyweight moves.</p>'+
+    '<div class="title"><div class="eyebrow">Session '+sessNo()+' of '+CFG.perCycle+' · Cycle '+cycleNo()+' of '+CFG.cycles+'</div><div class="h1">'+esc(s.name)+'</div><div class="facts meta">'+sessFacts(s)+'</div></div>'+
+    weekChips()+
+    '<p class="hint">Enter the reps you got for each set. Leave kg blank for bodyweight.</p>'+
     s.ex.map(exCard).join('')+
-    '<div class="dock"><div class="row"><span id="dockcount"></span></div><button class="btn primary block" type="button" id="complete" disabled>Complete session</button></div>';
+    '<div class="dock"><div class="row"><span id="dockcount"></span></div><button class="btn primary block" type="button" id="complete" disabled>Finish session</button></div>';
   wireTrain();
   s.ex.forEach(function(e,i){refreshRow(i);});
   refreshDock();
@@ -833,7 +922,7 @@ function renderTrain(){
 function refreshRow(i){
   var st=rowState(i),card=$('#ex-'+i);if(!card){return;}
   card.classList.toggle('done',st.complete);
-  $('#rs-'+i).textContent=st.complete?'✓ Ready':'';
+  $('#rs-'+i).textContent=st.complete?'✓ Done':'';
   $('#err-'+i).textContent=st.invalid||'';
   $$('input',card).forEach(function(x){x.classList.toggle('bad',false);});
   if(st.invalid){
@@ -848,11 +937,11 @@ function refreshDock(){
     var tot=0;
     s.seg.forEach(function(g,i){var st=hyState(i);if(st.complete){n++;}if(st.secs!=null){tot+=st.secs;}});
     all=n===s.seg.length;
-    msg=all?'All '+s.seg.length+' splits ready · total '+fmtT(tot):n+' of '+s.seg.length+' splits ready';
+    msg=all?'All '+s.seg.length+' splits in · total '+fmtT(tot):n+' of '+s.seg.length+' splits in';
   }else{
     s.ex.forEach(function(e,i){if(rowState(i).complete){n++;}});
     all=n===s.ex.length&&s.ex.length>0;
-    msg=all?'All '+s.ex.length+' exercises ready':n+' of '+s.ex.length+' exercises ready';
+    msg=all?'All '+s.ex.length+' exercises done':n+' of '+s.ex.length+' exercises done';
   }
   $('#dockcount').textContent=msg;
   $('#complete').disabled=!all;
@@ -868,7 +957,7 @@ function wireTrain(){
     var i=Number(b.dataset.ex),d=inp(i);d.fb=d.fb===b.dataset.fb?'':b.dataset.fb;
     $$('[data-fb][data-ex="'+i+'"]',v).forEach(function(c){c.classList.toggle('on',c.dataset.fb===d.fb);});
   });});
-  $$('[data-demo]',v).forEach(function(b){b.addEventListener('click',function(){toast('Demo video opens here (link from your Training Plan tab)');});});
+  $$('[data-demo]',v).forEach(function(b){b.addEventListener('click',function(){toast('No demo video for this one yet.');});});
   $('#complete').addEventListener('click',openSummary);
 }
 function results(){
@@ -881,11 +970,11 @@ function openSummary(){
   if(LIVE){openLiveSummary();return;}
   var s=curSession(),res=results();
   var rows=res.map(function(r){
-    return '<div class="sum"><b>'+esc(r.ex.name)+'</b><span>Done '+fmtPlan(r.reps,r.load)+'</span><span class="nx">Next: '+fmtPlan(r.next.target,r.next.load)+'</span><span class="why">'+esc(r.next.why)+'</span></div>';
+    return '<div class="sum"><b>'+esc(r.ex.name)+'</b><span>Done '+fmtPlan(r.reps,r.load)+'</span><span class="nx">Next '+fmtPlan(r.next.target,r.next.load)+'</span><span class="why">'+esc(r.next.why)+'</span></div>';
   }).join('');
   var nxt=SESSIONS[(completed+1)%CFG.perCycle].name;
-  openSheet('<div class="h2">Log '+esc(s.name)+'?</div><div class="meta">This saves the session and sets your next targets. '+(completed+1>=TOTAL?'That finishes your block.':'Next up: '+esc(nxt)+'.')+'</div>'+rows+
-    '<button class="btn primary block" type="button" id="confirmdone">Log session and load next</button><button class="btn ghost block" type="button" id="backto">Back to session</button>');
+  openSheet('<div class="h2">Finish '+esc(s.name)+'?</div><div class="meta">Here’s what you did and what’s next. '+(completed+1>=TOTAL?'This finishes your block.':'Up next: '+esc(nxt)+'.')+'</div>'+rows+
+    '<button class="btn primary block" type="button" id="confirmdone">Save session</button><button class="btn ghost block" type="button" id="backto">Back</button>');
   $('#backto').addEventListener('click',closeSheet);
   $('#confirmdone').addEventListener('click',function(){
     var res2=results(),name=s.name,progressed=res2.filter(function(r){return r.next.kind==='load'||r.next.kind==='rep';}).length;
@@ -893,7 +982,7 @@ function openSummary(){
     state.history.push({date:todayIso,name:name,note:progressed+' of '+res2.length+' progressed'});
     completed++;train.inputs={};train.fb='';
     closeSheet();
-    toast(name+' logged ('+wkCount()+')'+(finished()?'. Block complete.':'. '+curSession().name+' is loaded.'));
+    toast(doneMsg(name));
     renderTrain();$('#main').scrollTop=0;
   });
 }
@@ -922,7 +1011,7 @@ function hyRow(g,i){
   var d=hin(i),stn=g.kind==='stn',sub2='';
   if(stn){
     sub2='<div class="hy-sub2">'+(g.loadKg!=null?'<label class="hy-load"><span>'+esc(g.loadLabel)+'</span><input type="number" inputmode="decimal" step="0.5" min="0" data-hy="'+i+'" data-load="1" value="'+esc(d.load)+'" aria-label="'+esc(g.name)+' load in kilograms"></label>':'<span class="hy-load"></span>')+
-      '<button class="demo" type="button" data-demo="'+i+'">▶ Demo</button></div>';
+      '<button class="demo" type="button" data-demo="'+i+'">'+ICON.play+'Demo</button></div>';
   }
   return '<div class="hy-row'+(stn?' stn':'')+'" id="hy-'+i+'">'+
     '<div class="hy-main"><span class="hy-tag">'+(stn?'STATION':'RUN')+'</span><div class="hy-name"><b>'+esc(g.name)+'</b><span>'+esc(g.dist)+'</span></div>'+
@@ -936,13 +1025,12 @@ function renderHyrox(s){
   var tgt=s.seg.reduce(function(a,g){return a+g.plan.tgt;},0),last=s.seg.reduce(function(a,g){return a+g.last.sec;},0);
   var fb=['Easy','Good','Hard'].map(function(f){return '<button type="button" class="chip'+(train.fb===f?' on':'')+'" data-hyfb="'+f+'">'+f+'</button>';}).join('');
   v.innerHTML=
-    '<div><div class="eyebrow">Timed session · '+esc(s.format)+'</div><div class="h1" style="margin-top:8px">'+esc(s.name)+'</div>'+
-    '<div class="meta" style="margin-top:8px">Cycle '+cycleNo()+' of '+CFG.cycles+' · Session '+sessNo()+' of '+CFG.perCycle+' · '+completed+' of '+TOTAL+' sessions completed</div></div>'+
-    '<div class="chips"><span class="pill">This week: '+Math.min(sessionsThisWeek(),CFG.plannedPerWeek)+' of '+CFG.plannedPerWeek+' sessions</span>'+(carriedOver()>0?'<span class="pill warn">'+carriedOver()+' carried over</span>':'')+'</div>'+
-    '<div class="tiles" style="grid-template-columns:1fr 1fr"><div class="tile"><div class="eyebrow">Target total</div><div class="num">'+fmtT(tgt)+'</div></div><div class="tile"><div class="eyebrow">Last time</div><div class="num">'+fmtT(last)+'</div></div></div>'+
-    '<p class="hint">'+esc(s.blurb)+' Type each time as digits and it fills in as minutes and seconds: 542 becomes 5:42. Do it on any day that suits you.</p>'+
+    '<div class="title"><div class="eyebrow">Session '+sessNo()+' of '+CFG.perCycle+' · Cycle '+cycleNo()+' of '+CFG.cycles+'</div><div class="h1">'+esc(s.name)+'</div><div class="facts meta"><span>'+esc(s.format)+'</span>'+sessFacts(s,true)+'</div></div>'+
+    weekChips()+
+    '<div class="macros4" style="grid-template-columns:1fr 1fr"><div><span class="eyebrow">Target</span><span class="num" style="color:var(--plate)">'+fmtT(tgt)+'</span></div><div><span class="eyebrow">Last time</span><span class="num">'+fmtT(last)+'</span></div></div>'+
+    '<p class="hint">'+esc(s.blurb)+' Type times as digits: 542 is 5:42.</p>'+
     '<div class="card hy">'+s.seg.map(hyRow).join('')+'</div>'+
-    '<div class="dock"><div class="row"><span id="dockcount"></span></div><button class="btn primary block" type="button" id="complete" disabled>Complete session</button></div>';
+    '<div class="dock"><div class="row"><span id="dockcount"></span></div><button class="btn primary block" type="button" id="complete" disabled>Finish session</button></div>';
   wireHyrox();
   s.seg.forEach(function(g,i){refreshHy(i);});
   refreshDock();
@@ -972,7 +1060,7 @@ function wireHyrox(){
     train.fb=train.fb===b.dataset.hyfb?'':b.dataset.hyfb;
     $$('[data-hyfb]',v).forEach(function(c){c.classList.toggle('on',c.dataset.hyfb===train.fb);});
   });});
-  $$('[data-demo]',v).forEach(function(b){b.addEventListener('click',function(){toast('Demo video opens here (link from your Training Plan tab)');});});
+  $$('[data-demo]',v).forEach(function(b){b.addEventListener('click',function(){toast('No demo video for this one yet.');});});
   $('#complete').addEventListener('click',openHySummary);
 }
 function hyResults(){
@@ -989,8 +1077,8 @@ function openHySummary(){
     return '<div class="sum"><div class="row"><b>'+esc(r.g.name)+'</b><b>'+fmtT(r.sec)+(r.load!=null?' <span style="font-weight:500;color:var(--mute)">@ '+r.load+' kg</span>':'')+'</b></div><span class="why">'+esc(r.next.why)+'</span></div>';
   }).join('');
   var nxt=SESSIONS[(completed+1)%CFG.perCycle].name;
-  openSheet('<div class="h2">Log '+esc(s.name)+'?</div><div class="meta"><b style="color:var(--chalk)">Total '+fmtT(total)+'.</b> '+head+' '+(completed+1>=TOTAL?'That finishes your block.':'Next up: '+esc(nxt)+'.')+'</div>'+rows+
-    '<button class="btn primary block" type="button" id="confirmdone">Log session and load next</button><button class="btn ghost block" type="button" id="backto">Back to session</button>');
+  openSheet('<div class="h2">Finish '+esc(s.name)+'?</div><div class="meta"><b style="color:var(--chalk)">Total '+fmtT(total)+'.</b> '+head+' '+(completed+1>=TOTAL?'This finishes your block.':'Up next: '+esc(nxt)+'.')+'</div>'+rows+
+    '<button class="btn primary block" type="button" id="confirmdone">Save session</button><button class="btn ghost block" type="button" id="backto">Back</button>');
   $('#backto').addEventListener('click',closeSheet);
   $('#confirmdone').addEventListener('click',function(){
     var res2=hyResults(),name=s.name,t2=res2.reduce(function(a,r){return a+r.sec;},0);
@@ -1002,7 +1090,7 @@ function openHySummary(){
     state.history.push({date:todayIso,name:name,type:'hyrox',total:t2,splits:res2.map(function(r){return {name:r.g.name,sec:r.sec};}),note:'Total '+fmtT(t2)+(prev?' ('+sT(t2-prev)+')':'')});
     completed++;train.inputs={};train.fb='';
     closeSheet();
-    toast(name+' logged ('+wkCount()+')'+(finished()?'. Block complete.':'. '+curSession().name+' is loaded.'));
+    toast(doneMsg(name));
     renderTrain();$('#main').scrollTop=0;
   });
 }
@@ -1028,33 +1116,32 @@ function pickedPortion(gi,mi,m){
 }
 function mealCard(gi,mi,m,open){
   var pp=pickedPortion(gi,mi,m),o=pp.cur;
-  var macros='<div class="macros"><b>'+fv(o.calories)+'</b><span>kcal</span><span>·</span><span>'+fv(o.protein)+'P</span><span>'+fv(o.carbs)+'C</span><span>'+fv(o.fat)+'F</span></div>';
+  var macros='<div class="macros"><b>'+fv(o.calories)+'</b><span>kcal</span><span class="mx"><i>P</i>'+fv(o.protein)+'g</span><span class="mx"><i>C</i>'+fv(o.carbs)+'g</span><span class="mx"><i>F</i>'+fv(o.fat)+'g</span></div>';
   var meta=[m.prep,m.diet].filter(Boolean).map(esc).join(' · ');
   var ptns=pp.list.length>1?'<div class="ptns" role="group" aria-label="Portion size">'+pp.list.map(function(x){return '<button class="ptn'+(x===o?' on':'')+'" type="button" data-g="'+gi+'" data-m="'+mi+'" data-p="'+esc(x.portion)+'" aria-pressed="'+(x===o)+'">'+esc(x.portion)+'</button>';}).join('')+'</div>':'';
   var amts=(o.amounts&&o.amounts.length)?'<details class="amts"'+(open?' open':'')+'><summary>Amounts</summary><ul>'+o.amounts.map(function(a){return '<li>'+esc(a)+'</li>';}).join('')+'</ul></details>':'';
-  return '<article class="card meal" data-card="'+gi+'|'+mi+'"><div class="row"><h3>'+esc(m.name)+'</h3>'+(m.best?'<span class="pill good">Best match</span>':'')+'</div>'+macros+(meta?'<div class="meta">'+meta+'</div>':'')+ptns+amts+'</article>';
+  return '<article class="card meal" data-card="'+gi+'|'+mi+'"><div class="row"><h3>'+esc(m.name)+'</h3>'+(m.best?'<span class="pill good">Best fit</span>':'')+'</div>'+macros+(meta?'<div class="meta">'+meta+'</div>':'')+ptns+amts+'</article>';
 }
 function renderMeals(){
   var v=$('#view-meals'),n=nutrition();
-  var head='<div><div class="eyebrow">Meal plan</div><div class="h1" style="margin-top:8px">What to eat</div></div>';
+  var head='<div class="title"><div class="eyebrow">Nutrition</div><div class="h1">Meal plan</div></div>';
   var groups=n&&n.ready?mealGroups(n):[];
   if(!groups.length){
     var why='';
-    if(LIVE&&nutFail){why=nutFail.error==='unknown_action'?'Coach note: the sheet connection has not been updated to serve meals yet.':'Coach note: the sheet said "'+(nutFail.message||nutFail.error)+'".';}
-    else if(LIVE&&n&&!n.ready){why='Coach note: no meals were found for this client\'s diet type.';}
-    v.innerHTML=head+'<div class="card next"><div class="eyebrow">Not ready yet</div><div class="h1" style="font-size:30px">Your meal plan is on its way</div><div class="meta">'+esc(CFG.coach)+' is still setting it up. It will appear here as soon as it is ready.</div>'+(why?'<div class="hint" style="margin-top:10px">'+esc(why)+'</div>':'')+'</div>';
+    if(LIVE&&nutFail){why=nutFail.error==='unknown_action'?'The sheet connection has not been updated to serve meals yet.':'The sheet said "'+(nutFail.message||nutFail.error)+'".';}
+    else if(LIVE&&n&&!n.ready){why='No meals were found for this client\'s diet type.';}
+    v.innerHTML=head+'<div class="card quiet"><div class="eyebrow">Coming soon</div><div class="h1">Your meal plan is on its way</div><div class="meta">'+esc(CFG.coach)+' is putting it together. It will show here when it’s ready.</div>'+(why?'<details class="coach"><summary>Coach info</summary><div>'+esc(why)+'</div></details>':'')+'</div>';
     return;
   }
   var t=n.targets||{};if(mealSlot>=groups.length){mealSlot=0;}
   var st=n.style||{},styleLine=[st.diet,st.mealStyle,st.cooking?'Cooking '+st.cooking:''].filter(Boolean).map(esc).join(' · ');
-  var tiles=[['Calories',fv(t.calories),'kcal'],['Protein',fv(t.protein),'g'],['Carbs',fv(t.carbs),'g'],['Fats',fv(t.fats),'g']].map(function(x){return '<div class="tile"><div class="eyebrow">'+x[0]+'</div><div class="num">'+x[1]+'<small>'+x[2]+'</small></div></div>';}).join('');
-  var chips=groups.map(function(g,i){return '<button class="chip'+(i===mealSlot?' on':'')+'" type="button" data-slot="'+i+'">'+esc(g.type)+' ('+g.meals.length+')</button>';}).join('');
+  var tiles=[['Calories',fv(t.calories),'kcal'],['Protein',fv(t.protein),'g'],['Carbs',fv(t.carbs),'g'],['Fats',fv(t.fats),'g']].map(function(x){return '<div><span class="eyebrow">'+x[0]+'</span><span class="num">'+x[1]+'</span><span class="u">'+x[2]+'</span></div>';}).join('');
+  var chips=groups.map(function(g,i){return '<button class="chip'+(i===mealSlot?' on':'')+'" type="button" data-slot="'+i+'">'+esc(g.type)+'<span class="ct">'+g.meals.length+'</span></button>';}).join('');
   var cur=groups[mealSlot],bestN=cur.meals.filter(function(m){return m.best;}).length;
   v.innerHTML=head+
-    '<div class="stack"><div class="eyebrow">Daily targets'+(t.mealsPerDay?' · '+t.mealsPerDay+' meals':'')+'</div><div class="tiles" style="grid-template-columns:repeat(4,1fr)">'+tiles+'</div></div>'+
-    (styleLine?'<div class="meta">'+styleLine+'</div>':'')+
+    '<div class="stack"><div class="row"><div class="eyebrow">Daily targets</div>'+(t.mealsPerDay?'<span class="meta">'+t.mealsPerDay+' meals a day</span>':'')+'</div><div class="macros4">'+tiles+'</div>'+(styleLine?'<div class="hint">'+styleLine+'</div>':'')+'</div>'+
     '<div class="chips" id="slotchips">'+chips+'</div>'+
-    '<p class="hint">'+cur.meals.length+' '+esc(cur.type.toLowerCase())+' options'+(bestN?', the '+bestN+' closest to your targets first':'')+'. Pick any one and choose a portion size. Repeating meals is fine.</p>'+
+    '<p class="hint">Pick any '+esc(cur.type.toLowerCase())+' and a portion size.'+(bestN?' Best fits for your targets are at the top.':'')+' Repeating meals is fine.</p>'+
     '<div class="stack" id="mealList">'+cur.meals.map(function(m,mi){return mealCard(mealSlot,mi,m,false);}).join('')+'</div>';
   $$('#slotchips [data-slot]',v).forEach(function(b){b.addEventListener('click',function(){mealSlot=Number(b.dataset.slot);renderMeals();window.scrollTo(0,0);});});
   $('#mealList',v).addEventListener('click',function(e){
@@ -1081,20 +1168,20 @@ function renderCheckin(){
     '<div class="tile"><div class="eyebrow">Sessions</div><div class="num">'+sess+'<small>/ '+CFG.plannedPerWeek+'</small></div></div>'+
     '<div class="tile"><div class="eyebrow">Calories</div><div class="num">'+(kc?fmt(kc):'—')+'</div><div class="sub">'+(kt?'target '+fmt(kt):'')+'</div></div>'+
     '<div class="tile"><div class="eyebrow">Steps</div><div class="num">'+(st?fmt(st):'—')+'</div><div class="sub">target '+fmt(TARGETS.steps)+'</div></div>'+
-    '<div class="tile"><div class="eyebrow">Check-in day</div><div class="num" style="font-size:24px">Sun</div></div>';
+    '<div class="tile"><div class="eyebrow">Due</div><div class="num">Sun</div></div>';
   var slots=[['front','Front'],['side','Side'],['back','Back']].map(function(s){
     return '<label class="photo"><input type="file" accept="image/*" data-photo="'+s[0]+'" hidden><span class="ph-box'+(state.photos[s[0]]?' has':'')+'" id="ph-'+s[0]+'">+</span>'+s[1]+'</label>';
   }).join('');
   var sent=state.checkin.sent;
   var sentBox=sent
-    ? '<div class="banner ok"><div><b>Check-in sent '+fmtDate(sent)+', '+pad(sent.getHours())+':'+pad(sent.getMinutes())+'.</b> '+(LIVE?'Preview only, so it has not gone to the sheet.':'On '+esc(CFG.coach)+'’s dashboard this shows as <b>Ready to review</b>.')+'</div></div><button class="btn ghost block" type="button" id="resend">Edit and send again</button>'
+    ? '<div class="banner ok"><div><b>Sent '+fmtDate(sent)+' at '+pad(sent.getHours())+':'+pad(sent.getMinutes())+'.</b> '+(LIVE?'Preview only, so it hasn’t been sent.':esc(CFG.coach)+' will review it and get back to you.')+'</div></div><button class="btn ghost block" type="button" id="resend">Edit and resend</button>'
     : '<button class="btn primary block" type="button" id="sendci">Send check-in</button>';
   v.innerHTML=
-    '<div><div class="eyebrow">Week '+THIS_WEEK+' · '+fmtDate(monday)+' to '+fmtDate(addDays(monday,6))+'</div><div class="h1" style="margin-top:8px">Weekly check-in</div></div>'+
+    '<div class="title"><div class="eyebrow">Week '+THIS_WEEK+' · '+fmtDate(monday)+' – '+fmtDate(addDays(monday,6))+'</div><div class="h1">Weekly check-in</div></div>'+
     previewBanner()+'<div class="tiles">'+stats+'</div>'+
-    (n<5&&!sent?'<div class="banner warn"><div><b>Only '+n+' of 7 days logged.</b> You can still send it, or back-fill missing days on the Log tab first.</div></div>':'')+
-    (CFG.photos?'<div class="card"><div class="eyebrow">Progress photos</div><div class="hint">Same spot, same light, same time of day. Morning before food is best.</div><div class="photos">'+slots+'</div></div>':'')+
-    '<label class="field card"><span class="eyebrow">Message for '+esc(CFG.coach)+'</span><textarea id="cinote" placeholder="How did the week go? Wins, struggles, questions.">'+esc(state.checkin.note)+'</textarea></label>'+
+    (n<5&&!sent?'<div class="banner warn"><div><b>'+n+' of 7 days logged.</b> Fill in any missed days on the Log tab first if you can.</div></div>':'')+
+    (CFG.photos?'<div class="card"><div class="eyebrow">Progress photos</div><div class="hint">Same spot, same light, same time. First thing in the morning is best.</div><div class="photos">'+slots+'</div></div>':'')+
+    '<label class="field card"><span class="eyebrow">Message for '+esc(CFG.coach)+'</span><textarea id="cinote" placeholder="How did the week go? Wins, struggles, questions for '+esc(CFG.coach)+'.">'+esc(state.checkin.note)+'</textarea></label>'+
     sentBox;
   Object.keys(state.photos).forEach(function(k){var b=$('#ph-'+k);if(b){b.style.backgroundImage='url("'+state.photos[k]+'")';}});
   $$('input[data-photo]',v).forEach(function(inp){inp.addEventListener('change',function(){
@@ -1102,7 +1189,7 @@ function renderCheckin(){
     var rd=new FileReader();rd.onload=function(){state.photos[inp.dataset.photo]=rd.result;var b=$('#ph-'+inp.dataset.photo);b.style.backgroundImage='url("'+rd.result+'")';b.classList.add('has');};rd.readAsDataURL(f);
   });});
   $('#cinote').addEventListener('input',function(ev){state.checkin.note=ev.target.value;});
-  var sb=$('#sendci');if(sb){sb.addEventListener('click',function(){state.checkin.sent=new Date();toast(LIVE?'Check-in saved in preview only':'Check-in sent to '+CFG.coach);renderCheckin();$('#main').scrollTop=0;});}
+  var sb=$('#sendci');if(sb){sb.addEventListener('click',function(){state.checkin.sent=new Date();toast(LIVE?'Saved in preview only':'Check-in sent');renderCheckin();$('#main').scrollTop=0;});}
   var rs=$('#resend');if(rs){rs.addEventListener('click',function(){state.checkin.sent=null;renderCheckin();});}
 }
 
@@ -1141,18 +1228,18 @@ function renderProgress(){
       var q=ph?ph.splits.filter(function(x){return x.name===p.name;})[0]:null,dl=q?p.sec-q.sec:null;
       return '<tr><td>'+esc(p.name)+'</td><td>'+fmtT(p.sec)+'</td><td class="'+(dl==null||dl===0?'':dl<0?'down':'up')+'">'+(dl==null?'—':sT(dl))+'</td><td>'+fmtT(best[p.name])+'</td></tr>';
     }).join('');
-    hyCard='<div class="card"><div class="eyebrow">Hyrox sim · '+fmtDate(fromIso(lh.date))+'</div><div class="row"><span class="num">'+fmtT(lh.total)+'</span><span class="meta">'+(ph?sT(lh.total-ph.total)+' vs previous sim':'First sim logged')+'</span></div>'+
+    hyCard='<div class="card"><div class="eyebrow">Hyrox sim · '+fmtDate(fromIso(lh.date))+'</div><div class="row"><span class="num">'+fmtT(lh.total)+'</span><span class="meta">'+(ph?sT(lh.total-ph.total)+' vs last sim':'Your first sim')+'</span></div>'+
       '<table><thead><tr><th>Split</th><th>Time</th><th>Change</th><th>Best</th></tr></thead><tbody>'+hrows+'</tbody></table></div>';
   }
   var hist=state.history.slice().reverse().slice(0,6).map(function(h){
     return '<tr><td>'+esc(h.name)+'</td><td>'+fmtDate(fromIso(h.date))+'</td><td>'+esc(h.note)+'</td></tr>';
   }).join('');
   v.innerHTML=
-    '<div><div class="eyebrow">Progress</div><div class="h1" style="margin-top:8px">Your trend</div></div>'+
+    '<div class="title"><div class="eyebrow">Last '+wk.length+' weeks</div><div class="h1">Progress</div></div>'+
     '<div class="tiles"><div class="tile"><div class="eyebrow">Start</div><div class="num">'+first.avg.toFixed(1)+'<small>kg</small></div></div>'+
     '<div class="tile"><div class="eyebrow">Now</div><div class="num">'+last.avg.toFixed(1)+'<small>kg</small></div></div>'+
     '<div class="tile"><div class="eyebrow">Change</div><div class="num '+(change>0?'up':'down')+'">'+signed(change)+'<small>kg</small></div></div></div>'+
-    '<div class="card"><div class="eyebrow">Bodyweight</div>'+chartSVG()+'<div class="hint">Grey dots are daily weigh-ins. The yellow line is your weekly average. The trend is what matters.</div></div>'+
+    '<div class="card"><div class="eyebrow">Bodyweight</div>'+chartSVG()+'<div class="hint">Dots are daily weigh-ins. The line is your weekly average, which is the number to watch.</div></div>'+
     hyCard+'<div class="card"><div class="eyebrow">Week by week</div><table><thead><tr><th>Week</th><th>Avg kg</th><th>Change</th><th>Logged</th></tr></thead><tbody>'+rows+'</tbody></table></div>'+
     '<div class="card"><div class="eyebrow">Recent sessions</div><table><thead><tr><th>Session</th><th>Date</th><th>Result</th></tr></thead><tbody>'+hist+'</tbody></table></div>';
 }
@@ -1163,17 +1250,16 @@ function renderProgressLive(){
   var cards=hist.slice(0,5).map(function(h){
     var rows=(h.exercises||[]).map(function(e){
       var nx=(e.nextReps||[]).slice(0,e.nextSets);
-      return '<div class="sum"><b>'+esc(e.name)+'</b><span>Done '+fmtPlan(e.actualReps||[],e.actualLoad)+'</span><span class="nx">Next: '+fmtPlan(nx,e.nextLoad)+'</span><span class="why">'+esc(nice(String(e.outcome||'').replace('•','·')))+'</span></div>';
+      return '<div class="sum"><b>'+esc(nice(e.name))+'</b><span>Done '+fmtPlan(e.actualReps||[],e.actualLoad)+'</span><span class="nx">Next '+fmtPlan(nx,e.nextLoad)+'</span><span class="why">'+esc(outcomeText(e.outcome))+'</span></div>';
     }).join('');
-    return '<div class="card"><div class="eyebrow">'+fmtDate(fromIso(h.date))+' · Cycle '+h.cycle+', session '+h.session+'</div><div class="row"><div class="h2" style="font-size:22px">'+esc(h.name)+'</div><span class="pill">'+esc(h.note)+'</span></div>'+rows+'</div>';
+    return '<div class="card"><div class="eyebrow">'+fmtDate(fromIso(h.date))+' · Cycle '+h.cycle+', session '+h.session+'</div><div class="row"><div class="h2">'+esc(h.name)+'</div><span class="pill'+(/^0 of/.test(h.note)?'':' good')+'">'+esc(h.note)+'</span></div>'+rows+'</div>';
   }).join('');
   v.innerHTML=
-    '<div><div class="eyebrow">Progress</div><div class="h1" style="margin-top:8px">Your training</div></div>'+
+    '<div class="title"><div class="eyebrow">Your block</div><div class="h1">Progress</div></div>'+
     '<div class="tiles"><div class="tile"><div class="eyebrow">Sessions</div><div class="num">'+completed+'<small>of '+TOTAL+'</small></div></div>'+
     '<div class="tile"><div class="eyebrow">Cycle</div><div class="num">'+Math.min(cycleNo(),CFG.cycles)+'<small>of '+CFG.cycles+'</small></div></div>'+
     '<div class="tile"><div class="eyebrow">This week</div><div class="num">'+Math.min(sessionsThisWeek(),CFG.plannedPerWeek)+'<small>of '+CFG.plannedPerWeek+'</small></div></div></div>'+
-    (cards||'<div class="card"><div class="eyebrow">Sessions</div><div class="meta">No sessions logged yet. Your first one will show up here with your next targets.</div></div>')+
-    '<div class="card"><div class="eyebrow">Bodyweight trend</div><div class="hint">Your weight chart appears here once daily logs are connected to your sheet.</div></div>';
+    (cards?'<div class="eyebrow" style="margin-top:4px">Recent sessions</div>'+cards:'<div class="card"><div class="eyebrow">Recent sessions</div><div class="meta">Nothing yet. Finish your first session and your results will show here.</div></div>');
 }
 
 /* ---------- routing ---------- */
@@ -1181,14 +1267,14 @@ var VIEWS=['home','log','train','meals','checkin','progress'];
 var RENDER={home:renderHome,log:renderLog,train:renderTrain,meals:renderMeals,checkin:renderCheckin,progress:function(){if(LIVE){renderProgressLive();}else{renderProgress();}}};
 function route(){
   var h=(location.hash||'#home').slice(1);
-  if(VIEWS.indexOf(h)<0){h='home';}
+  if(VIEWS.indexOf(h)<0||(LIVE&&!CFG.dailyLog&&(h==='log'||h==='checkin'))){h='home';}
   if(BOOT==='loading'||BOOT==='error'){
-    closeSheet();
+    closeSheet();setPill();$('#nav').hidden=true;
     VIEWS.forEach(function(n){$('#view-'+n).hidden=n!=='home';});
     $$('#nav a').forEach(function(a){a.classList.remove('on');a.removeAttribute('aria-current');});
     $('#view-home').innerHTML=bootHtml();wireBoot();return;
   }
-  closeSheet();
+  closeSheet();setPill();$('#nav').hidden=false;
   VIEWS.forEach(function(n){$('#view-'+n).hidden=n!==h;});
   $$('#nav a').forEach(function(a){var on=a.dataset.tab===h;a.classList.toggle('on',on);if(on){a.setAttribute('aria-current','page');}else{a.removeAttribute('aria-current');}});
   RENDER[h]();
@@ -1201,7 +1287,7 @@ document.addEventListener('click',function(ev){
 window.addEventListener('hashchange',route);
 TOKEN=getToken();
 if(CFG.api&&TOKEN){startLive();}
-else if(CFG.api){BOOT='error';BOOTERR='This link is missing your private code. Open the exact link your coach sent you.';route();}
+else if(CFG.api){BOOT='error';BOOTNORETRY=true;BOOTERR='This link isn’t complete. Open the full link '+CFG.coach+' sent you.';route();}
 else{route();}
 })();
 </script>
