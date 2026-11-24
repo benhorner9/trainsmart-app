@@ -1177,7 +1177,7 @@ function renderMeals(){
   if(!groups.length){
     var why='';
     if(LIVE&&nutFail){why=nutFail.error==='unknown_action'?'The sheet connection has not been updated to serve meals yet.':'The sheet said "'+(nutFail.message||nutFail.error)+'".';}
-    else if(LIVE&&n&&!n.ready){why='No meals were found for this client\'s diet type.';}
+    else if(LIVE&&n&&!n.ready){why=n.reason||'No meals were found for this client\'s diet type.';}
     v.innerHTML=head+'<div class="card quiet"><div class="eyebrow">Coming soon</div><div class="h1">Your meal plan is on its way</div><div class="meta">'+esc(CFG.coach)+' is putting it together. It will show here when it’s ready.</div>'+(why?'<details class="coach"><summary>Coach info</summary><div>'+esc(why)+'</div></details>':'')+'</div>';
     return;
   }
