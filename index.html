@@ -339,8 +339,11 @@ var CFG={brand:'TrainSmart Coaching',coach:'Ben',client:'Alex',cycles:8,perCycle
      previewToken is only for a private test build and must stay empty on the live site. With no api set, the app runs on sample data. */
   api:'https://script.google.com/macros/s/AKfycbzG21iPsnpDsXR1DxxErbmbZCgV5JVmExoot0nPmQru3ahJdhUGQHFTMut_GG7rYmZbrA/exec',
   previewToken:'',
-  /* TAB SWITCHES: what every live client sees. true = on, false = off. Home is always on.
-     To try a feature on one test client only, add it to the end of that client's link:
+  /* TAB SWITCHES. Home is always on. Each tab is decided in this order:
+     1. Test link: &on=log,checkin or &off=meals on the end of a client's link (&on=&off= clears it).
+     2. That client's tick-boxes in the Roster sheet (Train, Meals, Progress, Log, Check-in columns).
+     3. If the Roster cell is blank, the default below. true = on, false = off.
+     Test link details:
        &on=log,checkin   turns those on for that client
        &off=meals        turns those off for that client
        &on=&off=         clears the test settings again
@@ -596,7 +599,19 @@ function getToken(){
   return t||CFG.previewToken||'';
 }
 /* Per-client test switches from the link (&on= / &off=), remembered per client on this device. */
-var TABKEYS=['log','train','meals','progress','checkin'],TESTTABS={};
+var TABKEYS=['log','train','meals','progress','checkin'],TESTTABS={},CLIENTTABS={};
+/* Roster tick-boxes arrive from the sheet as true/false, "TRUE"/"FALSE", "yes"/"no" or blank. Blank = use the default. */
+function readClientTabs(raw){
+  var out={};if(!raw||typeof raw!=='object'){return out;}
+  Object.keys(raw).forEach(function(k){
+    var key=String(k).toLowerCase().replace(/[^a-z]/g,''),v=raw[k];
+    if(TABKEYS.indexOf(key)<0||v===''||v==null){return;}
+    var t=String(v).trim().toLowerCase();
+    if(v===true||t==='true'||t==='yes'||t==='on'||t==='1'){out[key]=true;}
+    else if(v===false||t==='false'||t==='no'||t==='off'||t==='0'){out[key]=false;}
+  });
+  return out;
+}
 function loadTestTabs(){
   var key='ts_tabs_'+TOKEN,q=null,saved=null;
   try{q=new URLSearchParams(location.search);}catch(e){}
@@ -613,6 +628,7 @@ function loadTestTabs(){
 function tabOn(t){
   if(t==='home'||!LIVE){return true;}
   if(Object.prototype.hasOwnProperty.call(TESTTABS,t)){return !!TESTTABS[t];}
+  if(Object.prototype.hasOwnProperty.call(CLIENTTABS,t)){return CLIENTTABS[t];}
   return CFG.tabs[t]!==false;
 }
 function testing(){return LIVE&&Object.keys(TESTTABS).length>0;}
@@ -657,6 +673,7 @@ function applyLive(home,sess,hist,nutr){
   var fn=nice(String((home.client&&home.client.name)||'').trim().split(/\s+/)[0]);
   CFG.client=fn?fn.charAt(0).toUpperCase()+fn.slice(1):'there';
   CFG.cycles=st.totalCycles||CFG.cycles;CFG.perCycle=st.perCycle||CFG.perCycle;CFG.plannedPerWeek=CFG.perCycle;
+  CLIENTTABS=readClientTabs(home.tabs||(home.client&&home.client.tabs));
   completed=st.completedSessions||0;TOTAL=(st.totalCycles||0)*(st.perCycle||0);
   state.history=((hist&&hist.sessions)||[]).slice().reverse().map(function(h){
     return {date:dateOf(h.date),name:nice(h.name),note:noteFor(h.exercises),cycle:h.cycle,session:h.session,exercises:h.exercises||[]};
