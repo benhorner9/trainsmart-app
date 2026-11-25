@@ -247,6 +247,16 @@ td{padding:9px 0;border-top:1px solid var(--line)}
 th:not(:first-child),td:not(:first-child){text-align:right}
 .up{color:var(--warn)} .down{color:var(--good)}
 .gain{color:var(--good)}
+.coachbar .cbtns{display:flex;gap:6px}
+.addcardio{margin:2px 0 4px}
+.scale10{grid-template-columns:repeat(10,1fr);gap:4px}
+.scale10 button{min-height:36px;font-size:13px}
+.cdist-own{display:inline-flex;align-items:center;gap:4px;padding-right:10px}
+.cdist-own input{width:64px;background:transparent;border:0;color:inherit;font:inherit;padding:0;outline:none}
+.ccheck{font-size:13px;color:var(--mute);min-height:18px}
+.ccheck b{color:var(--chalk)}
+.crow{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 0;border-top:1px solid var(--line)}
+.crow .cdel{padding:6px 10px;font-size:12px;min-height:0}
 .liftpick{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;margin:0 -16px;padding:0 16px}
 .liftpick::-webkit-scrollbar{display:none}
 .liftpick .chip{flex:none;min-height:34px;font-size:13px}
@@ -320,7 +330,7 @@ details.amts li::before{content:'';position:absolute;left:0;top:9px;width:5px;he
     <div class="brand"><span class="wordmark" id="brandName">TrainSmart</span></div>
     <span class="pill" id="modePill">Demo</span><span class="avatar" id="avatar" hidden></span>
   </header>
-  <div class="coachbar" id="coachbar" hidden><span>Coaching <b id="coachwho"></b></span><button class="btn ghost" type="button" id="coachswitch">Switch client</button></div>
+  <div class="coachbar" id="coachbar" hidden><span>Coaching <b id="coachwho"></b></span><span class="cbtns"><button class="btn ghost" type="button" id="coachcardio">+ Cardio</button><button class="btn ghost" type="button" id="coachswitch">Switch client</button></span></div>
   <main id="main">
     <section class="view" id="view-home" hidden></section>
     <section class="view" id="view-log" hidden></section>
@@ -719,7 +729,7 @@ function applyLive(home,sess,hist,nutr){
 }
 function soft(p){return p.catch(function(e){return {ok:false,error:(e&&e.code)||'error',message:(e&&e.message)||''};});}
 function fetchLive(){
-  return Promise.all([api('home'),api('session'),api('history'),soft(api('nutrition')),soft(api('logs')),soft(api('pbs')),soft(api('trends'))]).then(function(r){
+  return Promise.all([api('home'),api('session'),api('history'),soft(api('nutrition')),soft(api('logs')),soft(api('pbs')),soft(api('trends')),soft(api('cardio_list'))]).then(function(r){
     applyLive(r[0],r[1],r[2],r[3]);
     var lg=r[4];
     if(lg&&lg.ok){
@@ -728,6 +738,7 @@ function fetchLive(){
     }
     state.pbs=r[5]&&r[5].ok?(r[5].pbs||[]):null;
     state.trends=r[6]&&r[6].ok?r[6]:null;
+    if(r[7]&&r[7].ok){state.cardio=r[7].entries||[];}
   });
 }
 function setPill(){
@@ -904,13 +915,15 @@ function renderLog(){
     '<div class="chips" id="datechips"><button class="chip'+(logDate===todayIso?' on':'')+'" type="button" data-date="'+todayIso+'">Today</button><button class="chip'+(logDate===yIso?' on':'')+'" type="button" data-date="'+yIso+'">Yesterday</button>'+
     '<label class="chip datechip'+(custom?' on':'')+'">'+ICON.cal+(custom?fmtDate(fromIso(logDate)):'Other day')+'<input id="pickdate" type="date" min="'+iso(LIVE?addDays(today,-14):startMonday)+'" max="'+todayIso+'" value="'+(custom?logDate:'')+'" aria-label="Pick another date"></label></div>'+
     '<div class="card"><div class="eyebrow">Body and food</div><div class="fgrid">'+fields.w+fields.steps+fields.p+fields.f+fields.c+fields.kcal+'<div class="field wide"><span class="hint" id="macrohint">'+macroHint(e)+'</span></div>'+fields.fluid+'</div></div>'+
-    '<div class="card"><div class="eyebrow">Training</div><div class="row"><span class="fl">Session</span><span class="pill'+(sess?' good':'')+'">'+(sess?esc(sess)+' done':'None')+'</span></div><div class="fgrid">'+fields.cardio+'</div></div>'+
+    '<div class="card"><div class="eyebrow">Training</div><div class="row"><span class="fl">Session</span><span class="pill'+(sess?' good':'')+'">'+(sess?esc(sess)+' done':'None')+'</span></div><div class="fgrid">'+fields.cardio+'</div>'+cardioRows(cardioList().filter(function(c){return c.date===logDate;}),true)+'<button class="btn ghost block" type="button" id="logcardio">+ Add cardio: type, distance and time</button></div>'+
     '<div class="card"><div class="eyebrow">How you feel</div>'+scales+'<div class="fgrid">'+fields.sleep+'</div></div>'+
     '<div class="card"><div class="eyebrow">Off plan today?</div><div class="toggle"><button type="button" class="chip'+(e.off===false?' on':'')+'" data-off="0">No</button><button type="button" class="chip'+(e.off===true?' on':'')+'" data-off="1">Yes</button></div>'+
     '<label class="field"><span class="fl">Notes</span><textarea id="f-notes" data-k="notes" placeholder="Meal out, bad night, sore knee… anything worth knowing.">'+esc(e.notes||'')+'</textarea></label></div>'+
     '<div id="warnbox"></div>'+
     '<button class="btn primary block" type="button" id="savelog">'+(state.logs[logDate]?'Update log':'Save log')+'</button>';
   wireLog();
+  $('#logcardio').addEventListener('click',function(){cardioSheet({date:logDate});});
+  wireCardioDelete(v);
 }
 function setFieldErr(k,msg){var el=$('#e-'+k),inp=$('#f-'+k);if(el){el.textContent=msg||'';}if(inp){inp.classList.toggle('bad',!!msg);}}
 function validateLog(e){
@@ -1035,10 +1048,12 @@ function renderTrain(){
   v.innerHTML=
     '<div class="title"><div class="eyebrow">Session '+sessNo()+' of '+CFG.perCycle+' · Cycle '+cycleNo()+' of '+CFG.cycles+'</div><div class="h1">'+esc(s.name)+'</div><div class="facts meta">'+sessFacts(s)+'</div></div>'+
     weekChips()+
+    '<button class="btn ghost block addcardio" type="button" id="addcardio">+ Add cardio (run, row, ski, bike)</button>'+
     '<p class="hint">Enter the reps you got for each set. Leave kg blank for bodyweight.</p>'+
     s.ex.map(exCard).join('')+
     '<div class="dock"><div class="row"><span id="dockcount"></span></div><button class="btn primary block" type="button" id="complete" disabled>Finish session</button></div>';
   wireTrain();
+  $('#addcardio').addEventListener('click',function(){cardioSheet(plannedCardio(s));});
   s.ex.forEach(function(e,i){refreshRow(i);});
   refreshDock();
 }
@@ -1385,7 +1400,155 @@ function renderProgressLive(){
     trendsSection()+pbSection()+
     (cards?'<div class="eyebrow" style="margin-top:4px">Recent sessions</div>'+cards:'<div class="card"><div class="eyebrow">Recent sessions</div><div class="meta">Nothing yet. Finish your first session and your results will show here.</div></div>');
   var more=$('#pbmore',v);if(more){more.addEventListener('click',function(){pbAll=true;renderProgressLive();});}
+  $$('[data-cpick]',v).forEach(function(b){b.addEventListener('click',function(){cardioSel=b.dataset.cpick;var y=window.scrollY;renderProgressLive();window.scrollTo(0,y);});});
   $$('[data-lift]',v).forEach(function(b){b.addEventListener('click',function(){liftSel=b.dataset.lift;var y=window.scrollY;renderProgressLive();window.scrollTo(0,y);var on=$('.liftpick .chip.on');if(on){var pk=on.parentNode;pk.scrollLeft=on.offsetLeft-pk.clientWidth/2+on.offsetWidth/2;}});});
+}
+/* ---------- cardio log ---------- */
+/* Any run, row, ski or bike effort: type, distance and time. Saved to the
+   tracker's Cardio Log tab; best times per effort show on Progress. */
+var CTYPES=[
+  {k:'Run',per:1000,unit:'km',pre:[1000,3000,5000,10000]},
+  {k:'Row',per:500,unit:'m',pre:[500,1000,2000,5000]},
+  {k:'SkiErg',per:500,unit:'m',pre:[500,1000,2000]},
+  {k:'Bike',per:1000,unit:'km',pre:[5000,10000,20000]},
+  {k:'Walk',per:1000,unit:'km',pre:[1000,5000]},
+  {k:'Other',per:1000,unit:'m',pre:[]}
+];
+var cdraft=null,cardioSel='';
+function ctype(k){return CTYPES.filter(function(t){return t.k===k;})[0]||CTYPES[0];}
+function fmtDist(m,k){var t=ctype(k);if(t.unit==='km'&&m>=1000){var v=m/1000;return (v%1?fmt(v,v*10%1?2:1):String(v))+' km';}return (m<10000?String(m):fmt(m))+' m';}
+function fmtDur(s){s=Math.round(s);var h=Math.floor(s/3600),m=Math.floor(s%3600/60),r=s%60;return h?h+':'+pad(m)+':'+pad(r):m+':'+pad(r);}
+function cpace(k,m,s){var t=ctype(k);return m>0&&s>0?fmtDur(s/m*t.per)+(t.per===500?' /500 m':' /km'):'';}
+function parseDur(v){
+  v=String(v||'').trim();if(!v){return null;}
+  var h=0,m=0,s=0;
+  if(/:/.test(v)){var p=v.split(':').map(function(x){return x===''?0:Number(x);});if(p.some(isNaN)){return {err:'Use digits, like 7:42 or 25:30.'};}
+    if(p.length===2){m=p[0];s=p[1];}else if(p.length===3){h=p[0];m=p[1];s=p[2];if(m>59){return {err:'Minutes must be 00 to 59.'};}}else{return {err:'Use digits, like 7:42 or 25:30.'};}}
+  else{var dg=v.replace(/\D/g,'');if(!dg){return {err:'Use digits, like 742 for 7:42.'};}
+    if(dg.length<=4){m=Number(dg.slice(0,-2)||0);s=Number(dg.slice(-2));}else{h=Number(dg.slice(0,-4));m=Number(dg.slice(-4,-2));s=Number(dg.slice(-2));if(m>59){return {err:'Minutes must be 00 to 59.'};}}}
+  if(s>59){return {err:'Seconds must be 00 to 59.'};}
+  var t=h*3600+m*60+s;if(t<10){return {err:'That time looks too short.'};}
+  return {secs:t};
+}
+function cardioList(){return state.cardio||(state.cardio=[]);}
+function cardioBest(k,m,exceptId){var b=null;cardioList().forEach(function(e){if(e.type===k&&e.dist===m&&e.id!==exceptId&&(!b||e.secs<b.secs)){b=e;}});return b;}
+/* A cardio exercise in today's session (e.g. "5k Run", "2000m Row") fills the form in. */
+function plannedCardio(s){
+  var out={};
+  ((s&&s.ex)||[]).some(function(ex){
+    var n=String(ex.rawName||ex.name||'');
+    var k=/\b(run|jog|treadmill)/i.test(n)?'Run':/\bski/i.test(n)?'SkiErg':/\brow(er|ing)?\b/i.test(n)?'Row':/\b(bike|cycle|assault|echo)\b/i.test(n)?'Bike':/\bwalk/i.test(n)?'Walk':'';
+    if(!k){return false;}
+    var d=n.match(/(\d+(?:\.\d+)?)\s*(km|k|m)\b/i);
+    out={type:k,dist:d?Math.round(Number(d[1])*(/^k/i.test(d[2])?1000:1)):null};return true;
+  });
+  return out;
+}
+function cardioSheet(pre){
+  pre=pre||{};
+  cdraft={date:pre.date||todayIso,type:pre.type||'Run',dist:pre.dist||null,custom:'',time:'',effort:null,notes:'',err:''};
+  if(cdraft.dist&&ctype(cdraft.type).pre.indexOf(cdraft.dist)<0){cdraft.custom=String(ctype(cdraft.type).unit==='km'?cdraft.dist/1000:cdraft.dist);}
+  drawCardioSheet();
+}
+function drawCardioSheet(){
+  var d=cdraft,t=ctype(d.type),yIso=iso(addDays(today,-1));
+  var types=CTYPES.map(function(x){return '<button type="button" class="chip'+(x.k===d.type?' on':'')+'" data-ctype="'+x.k+'">'+x.k+'</button>';}).join('');
+  var dists=t.pre.map(function(m){return '<button type="button" class="chip'+(d.dist===m&&!d.custom?' on':'')+'" data-cdist="'+m+'">'+fmtDist(m,d.type)+'</button>';}).join('');
+  var eff='';for(var n=1;n<=10;n++){eff+='<button type="button" data-ceff="'+n+'" class="'+(d.effort===n?'on':'')+'" aria-label="Effort '+n+'">'+n+'</button>';}
+  openSheet('<div class="h2">'+(COACHMODE?'Add cardio for '+esc(coachName||CFG.client):'Add cardio')+'</div>'+
+    '<div class="chips" role="group" aria-label="Day"><button type="button" class="chip'+(d.date===todayIso?' on':'')+'" data-cday="'+todayIso+'">Today</button><button type="button" class="chip'+(d.date===yIso?' on':'')+'" data-cday="'+yIso+'">Yesterday</button>'+
+      (d.date!==todayIso&&d.date!==yIso?'<span class="chip on">'+fmtDate(fromIso(d.date))+'</span>':'')+'</div>'+
+    '<div class="field"><span class="fl">Type</span><div class="chips" role="group" aria-label="Type">'+types+'</div></div>'+
+    '<div class="field"><span class="fl">Distance</span><div class="chips" role="group" aria-label="Distance">'+dists+
+      '<label class="chip cdist-own'+(d.custom?' on':'')+'"><input id="c-dist" type="number" inputmode="decimal" min="0" step="any" placeholder="Other" value="'+esc(d.custom)+'" aria-label="Other distance in '+t.unit+'"><span>'+t.unit+'</span></label></div></div>'+
+    '<label class="field"><span class="fl">Time</span><input id="c-time" type="text" inputmode="numeric" autocomplete="off" placeholder="m:ss" value="'+esc(d.time)+'" aria-describedby="c-hint"></label>'+
+    '<div class="hint" id="c-hint">Type 742 for 7:42, or 12530 for 1:25:30.</div>'+
+    '<div class="ccheck" id="c-check" aria-live="polite"></div>'+
+    '<div class="field"><span class="fl">How hard (optional)</span><div class="scale scale10">'+eff+'</div><div class="scale-ends"><span>Easy</span><span>Max</span></div></div>'+
+    '<label class="field"><span class="fl">Notes (optional)</span><textarea id="c-notes" rows="2" placeholder="Intervals, incline, felt strong…">'+esc(d.notes)+'</textarea></label>'+
+    '<div class="err" id="c-err" role="alert">'+esc(d.err)+'</div>'+
+    '<button class="btn primary block" type="button" id="c-save">Save</button><button class="btn ghost block" type="button" id="c-cancel">Cancel</button>');
+  var sh=$('#sheet');
+  $$('[data-cday]',sh).forEach(function(b){b.addEventListener('click',function(){d.date=b.dataset.cday;drawCardioSheet();});});
+  $$('[data-ctype]',sh).forEach(function(b){b.addEventListener('click',function(){if(d.type!==b.dataset.ctype){d.type=b.dataset.ctype;d.dist=null;d.custom='';}drawCardioSheet();});});
+  $$('[data-cdist]',sh).forEach(function(b){b.addEventListener('click',function(){d.dist=Number(b.dataset.cdist);d.custom='';drawCardioSheet();});});
+  $('#c-dist').addEventListener('input',function(ev){d.custom=ev.target.value;var n=Number(d.custom);d.dist=n>0?Math.round(n*(t.unit==='km'?1000:1)):null;
+    $$('[data-cdist]',sh).forEach(function(x){x.classList.remove('on');});ev.target.parentNode.classList.toggle('on',!!d.custom);cardioCheck();});
+  $('#c-time').addEventListener('input',function(ev){d.time=ev.target.value;cardioCheck();});
+  $$('[data-ceff]',sh).forEach(function(b){b.addEventListener('click',function(){var n=Number(b.dataset.ceff);d.effort=d.effort===n?null:n;$$('[data-ceff]',sh).forEach(function(x){x.classList.toggle('on',Number(x.dataset.ceff)===d.effort);});});});
+  $('#c-notes').addEventListener('input',function(ev){d.notes=ev.target.value;});
+  $('#c-cancel').addEventListener('click',closeSheet);
+  $('#c-save').addEventListener('click',saveCardio);
+  cardioCheck();
+}
+function cardioCheck(){
+  var d=cdraft,box=$('#c-check');if(!box){return;}
+  var p=parseDur(d.time),best=d.dist?cardioBest(d.type,d.dist):null,bits=[];
+  if(p&&p.secs&&d.dist){bits.push('Pace <b>'+cpace(d.type,d.dist,p.secs)+'</b>');}
+  if(best){bits.push('Best <b>'+fmtDur(best.secs)+'</b> ('+fmtDate(fromIso(best.date))+')');if(p&&p.secs&&p.secs<best.secs){bits.push('<span class="gain">New best!</span>');}}
+  else if(d.dist){bits.push('First '+esc(fmtDist(d.dist,d.type)+' '+d.type.toLowerCase())+' logged. It becomes the time to beat.');}
+  box.innerHTML=bits.join(' · ');
+  $('#c-time').classList.toggle('bad',!!(p&&p.err));
+}
+function saveCardio(){
+  var d=cdraft,p=parseDur(d.time),err='';
+  if(!d.dist){err='Pick or type the distance.';}
+  else if(!p){err='Enter the time it took.';}
+  else if(p.err){err=p.err;}
+  if(err){$('#c-err').textContent=err;return;}
+  var entry={date:d.date,type:d.type,dist:d.dist,secs:p.secs,effort:d.effort,notes:d.notes.trim()};
+  var prev=cardioBest(d.type,d.dist);
+  var done=function(saved,best){
+    cardioList().unshift(saved);
+    closeSheet();
+    var label=fmtDist(saved.dist,saved.type)+' '+saved.type.toLowerCase()+' in '+fmtDur(saved.secs);
+    toast(best?'New best! '+label:'Saved: '+label);
+    route();
+  };
+  if(!LIVE){done(Object.assign({id:'d'+Date.now(),pace:cpace(entry.type,entry.dist,entry.secs),by:'Client'},entry),!!(prev&&entry.secs<prev.secs));return;}
+  var btn=$('#c-save');btn.disabled=true;btn.textContent='Saving…';
+  var req={entry:entry};if(COACHMODE){req.by='coach';req.coach=COACH;}
+  api('cardio',req,30000).then(function(r){done(r.entry,r.best);}).catch(function(e){
+    btn.disabled=false;btn.textContent='Save';$('#c-err').textContent=(e&&e.message)||'That didn’t save. Try again.';
+  });
+}
+function cardioRows(list,del){
+  return list.map(function(e){
+    return '<div class="crow"><div><b>'+esc(fmtDist(e.dist,e.type))+' '+esc(e.type.toLowerCase())+'</b> · '+fmtDur(e.secs)+
+      '<div class="meta">'+esc(cpace(e.type,e.dist,e.secs))+(e.effort?' · effort '+e.effort+'/10':'')+(e.by==='Coach'?' · logged by '+esc(CFG.coach):'')+(e.notes?' · '+esc(e.notes):'')+'</div></div>'+
+      (del?'<button class="btn ghost cdel" type="button" data-cdel="'+esc(e.id)+'" aria-label="Delete this cardio">Delete</button>':'')+'</div>';
+  }).join('');
+}
+function wireCardioDelete(root){
+  $$('[data-cdel]',root).forEach(function(b){b.addEventListener('click',function(){
+    var id=b.dataset.cdel,e=cardioList().filter(function(x){return x.id===id;})[0];if(!e){return;}
+    openSheet('<div class="h2">Delete this cardio?</div><div class="meta">'+esc(fmtDist(e.dist,e.type)+' '+e.type.toLowerCase()+' in '+fmtDur(e.secs)+', '+fmtDate(fromIso(e.date)))+'</div>'+
+      '<div class="err" id="cd-err" role="alert"></div><button class="btn primary block" type="button" id="cd-yes">Delete</button><button class="btn ghost block" type="button" id="cd-no">Keep it</button>');
+    $('#cd-no').addEventListener('click',closeSheet);
+    $('#cd-yes').addEventListener('click',function(){
+      var gone=function(){state.cardio=cardioList().filter(function(x){return x.id!==id;});closeSheet();toast('Deleted');route();};
+      if(!LIVE){gone();return;}
+      $('#cd-yes').disabled=true;
+      api('cardio_delete',{id:id},30000).then(gone).catch(function(err){$('#cd-yes').disabled=false;$('#cd-err').textContent=(err&&err.message)||'That didn’t delete.';});
+    });
+  });});
+}
+/* Progress: best times per effort, with a chart of every time for that effort. */
+function cardioCard(){
+  var list=cardioList();if(!list.length){return '';}
+  var groups={},order=[];
+  list.forEach(function(e){var k=e.type+'|'+e.dist;if(!groups[k]){groups[k]=[];order.push(k);}groups[k].push(e);});
+  order.sort(function(a,b){return groups[b].length-groups[a].length;});
+  if(order.indexOf(cardioSel)<0){cardioSel=order[0];}
+  var g=groups[cardioSel].slice().sort(function(a,b){return a.date<b.date?-1:a.date>b.date?1:0;});
+  var best=g.reduce(function(a,e){return !a||e.secs<a.secs?e:a;},null),last=g[g.length-1],first=g[0];
+  var chips=order.map(function(k){var e=groups[k][0];return '<button class="chip'+(k===cardioSel?' on':'')+'" type="button" data-cpick="'+esc(k)+'" aria-pressed="'+(k===cardioSel)+'">'+esc(fmtDist(e.dist,e.type)+' '+e.type.toLowerCase())+'</button>';}).join('');
+  var diff=last.secs-first.secs,chg=g.length<2?'First time logged '+fmtDate(fromIso(first.date)):diff===0?'Same as '+fmtDate(fromIso(first.date)):(diff<0?'−':'+')+fmtDur(Math.abs(diff))+' since '+fmtDate(fromIso(first.date));
+  return '<div class="card"><div class="eyebrow">Cardio · best times</div>'+
+    '<div class="chips liftpick" role="group" aria-label="Pick an effort">'+chips+'</div>'+
+    '<div class="row"><span class="num">'+fmtDur(best.secs)+'<small>best</small></span><span class="meta '+(diff<0?'gain':'')+'">'+esc(chg)+'</span></div>'+
+    (g.length>=2?svgLine(g.map(function(e){return {t:fromIso(e.date).getTime(),y:e.secs};}),{fmtY:fmtDur,minPad:5,label:'Times for this effort'}):'')+
+    '<div class="hint">Best '+fmtDur(best.secs)+' ('+esc(cpace(best.type,best.dist,best.secs))+'), '+fmtDate(fromIso(best.date))+'. Last time '+fmtDur(last.secs)+'. '+(g.length>=2?'Lower is faster.':'Log it again to see your trend.')+'</div></div>';
 }
 /* ---------- progress charts (live) ---------- */
 /* Bodyweight and steps come from the client's own daily log; lifts come
@@ -1402,7 +1565,7 @@ function svgLine(pts,o){
   var X=function(t){return L+(t-t0)/(t1-t0)*(W-L-R);};
   var Y=function(y){return Tp+(hi-y)/(hi-lo)*(H-Tp-B);};
   var dp=o.dp==null?1:o.dp,g='';
-  [hi,(hi+lo)/2,lo].forEach(function(v){g+='<line x1="'+L+'" x2="'+(W-R)+'" y1="'+Y(v).toFixed(1)+'" y2="'+Y(v).toFixed(1)+'" style="stroke:var(--line)" stroke-width="1"/><text x="'+(L-6)+'" y="'+(Y(v)+4).toFixed(1)+'" text-anchor="end" font-size="11" style="fill:var(--mute)">'+fmt(v,dp)+'</text>';});
+  [hi,(hi+lo)/2,lo].forEach(function(v){g+='<line x1="'+L+'" x2="'+(W-R)+'" y1="'+Y(v).toFixed(1)+'" y2="'+Y(v).toFixed(1)+'" style="stroke:var(--line)" stroke-width="1"/><text x="'+(L-6)+'" y="'+(Y(v)+4).toFixed(1)+'" text-anchor="end" font-size="11" style="fill:var(--mute)">'+(o.fmtY?o.fmtY(v):fmt(v,dp))+'</text>';});
   var xl=[t0,t1].map(function(t,i){var d=new Date(t);return '<text x="'+X(t).toFixed(1)+'" y="'+(H-7)+'" text-anchor="'+(i?'end':'start')+'" font-size="11" style="fill:var(--mute)">'+d.getDate()+' '+MONTHS[d.getMonth()]+'</text>';}).join('');
   var tg=o.target!=null?'<line x1="'+L+'" x2="'+(W-R)+'" y1="'+Y(o.target).toFixed(1)+'" y2="'+Y(o.target).toFixed(1)+'" style="stroke:var(--good)" stroke-width="1.5" stroke-dasharray="4 4"/>':'';
   var line=function(a,w,col){return a.length>1?'<polyline points="'+a.map(function(p){return X(p.t).toFixed(1)+','+Y(p.y).toFixed(1);}).join(' ')+'" fill="none" style="stroke:'+col+'" stroke-width="'+w+'" stroke-linejoin="round" stroke-linecap="round"/>':'';};
@@ -1481,7 +1644,7 @@ function liftCard(){
     (load?'Est. 1RM turns your best set into one number, so heavier and more reps both count. Best so far '+kg(best)+' kg.':'Best so far '+best+' reps.')+'</div></div>';
 }
 function trendsSection(){
-  var html=weightCard()+stepsCard()+liftCard();
+  var html=weightCard()+stepsCard()+liftCard()+cardioCard();
   return html?'<div class="eyebrow" style="margin-top:4px">Trends</div>'+html:'';
 }
 var pbAll=false;
@@ -1570,7 +1733,7 @@ function pickClient(c){
   try{localStorage.setItem('ts_coach_recent',JSON.stringify(rec.slice(0,6)));}catch(e){}
   TOKEN=c.token;coachName=c.name;
   LIVE=false;LOGLIVE=false;nut=null;nutFail=null;mealPick={};mealSlot=0;
-  state.weights={};state.logs={};state.feedback={};state.pbs=null;state.trends=null;state.history=[];liftSel='';
+  state.weights={};state.logs={};state.feedback={};state.pbs=null;state.trends=null;state.cardio=[];state.history=[];liftSel='';cardioSel='';
   train.inputs={};drafts={};logDate=todayIso;logSaved=null;
   live.state=null;live.names=[];live.cur=null;live.key='';
   TESTTABS={};CLIENTTABS={};pbAll=false;
@@ -1608,6 +1771,7 @@ document.addEventListener('click',function(ev){
 window.addEventListener('hashchange',route);
 COACH=CFG.api?getCoachKey():'';
 $('#coachswitch').addEventListener('click',function(){coachQuery='';openCoach();});
+$('#coachcardio').addEventListener('click',function(){var cs=finished()?null:curSession();cardioSheet(cs&&!isHy(cs)?plannedCardio(cs):{});});
 if(COACH){openCoach();}
 else{TOKEN=getToken();loadTestTabs();}
 if(COACH){/* coach mode */}
