@@ -252,6 +252,20 @@ th:not(:first-child),td:not(:first-child){text-align:right}
 .ph-box{display:grid;place-items:center;aspect-ratio:3/4;border-radius:12px;border:1px dashed var(--line);background:var(--ink) center/cover no-repeat;font:800 30px/1 var(--font-display);color:var(--mute)}
 .ph-box.has{border-style:solid;border-color:var(--good);color:transparent}
 
+/* coach mode */
+.coachbar{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:0 20px 6px;padding:8px 8px 8px 14px;border:1px solid var(--plate);border-radius:12px;background:rgba(243,193,58,.08);font-size:14px}
+.coachbar .btn{padding:7px 12px;font-size:13px;min-height:0}
+.clist{display:flex;flex-direction:column;gap:8px}
+.crow{display:flex;justify-content:space-between;align-items:center;gap:12px;width:100%;text-align:left;padding:14px;border:1px solid var(--line);border-radius:14px;background:var(--panel);color:var(--chalk);font:inherit;cursor:pointer}
+.crow b{font-size:16px}
+.crow .meta{display:block;font-size:12px;margin-top:3px}
+.crow .st{font-size:11px;font-weight:700;padding:4px 8px;border-radius:999px;white-space:nowrap;background:rgba(143,164,173,.15);color:var(--mute)}
+.crow .st.bad{background:rgba(255,107,107,.15);color:var(--bad)}
+.crow .st.warn{background:rgba(255,157,77,.15);color:var(--warn)}
+.crow .st.good{background:rgba(93,211,158,.15);color:var(--good)}
+.crow .st.new{background:rgba(243,193,58,.15);color:var(--plate)}
+.csearch{width:100%;padding:13px 14px;border-radius:12px;border:1px solid var(--line);background:var(--panel);color:var(--chalk);font:inherit;font-size:16px}
+.recent{display:flex;gap:8px;flex-wrap:wrap}
 /* personal bests + coach feedback */
 .pbs{gap:0}
 .pbrow{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--line)}
@@ -302,6 +316,7 @@ details.amts li::before{content:'';position:absolute;left:0;top:9px;width:5px;he
     <div class="brand"><span class="wordmark" id="brandName">TrainSmart</span></div>
     <span class="pill" id="modePill">Demo</span><span class="avatar" id="avatar" hidden></span>
   </header>
+  <div class="coachbar" id="coachbar" hidden><span>Coaching <b id="coachwho"></b></span><button class="btn ghost" type="button" id="coachswitch">Switch client</button></div>
   <main id="main">
     <section class="view" id="view-home" hidden></section>
     <section class="view" id="view-log" hidden></section>
@@ -361,6 +376,7 @@ var CFG={brand:'TrainSmart Coaching',coach:'Ben',client:'Alex',cycles:8,perCycle
      Sample-data mode always shows every tab. */
   tabs:{train:true,meals:true,progress:true,log:false,checkin:false}};
 var LIVE=false,BOOT='demo',BOOTERR='',BOOTNORETRY=false,TOKEN='';
+var COACH='',COACHMODE=false,coachList=null,coachErr='',coachQuery='',coachName='';
 var live={state:null,names:[],cur:null,key:''};
 (function(){var w=CFG.brand.split(' ');$('#brandName').innerHTML=esc(w[0])+(w.length>1?' <span>'+esc(w.slice(1).join(' '))+'</span>':'');})();
 var ICON={play:'<svg viewBox="0 0 10 10"><path d="M2 1l7 4-7 4z"/></svg>',arrow:'<svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg>',cal:'<svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>'};
@@ -638,6 +654,7 @@ function loadTestTabs(){
 }
 function tabOn(t){
   if(t==='home'||!LIVE){return true;}
+  if(COACHMODE){return t==='checkin'?CFG.tabs.checkin!==false:true;}
   if(Object.prototype.hasOwnProperty.call(TESTTABS,t)){return !!TESTTABS[t];}
   if(Object.prototype.hasOwnProperty.call(CLIENTTABS,t)){return CLIENTTABS[t];}
   return CFG.tabs[t]!==false;
@@ -711,8 +728,9 @@ function fetchLive(){
 function setPill(){
   var p=$('#modePill'),a=$('#avatar');if(!p){return;}
   var test=testing();
-  p.hidden=BOOT!=='demo'&&!test;a.hidden=!LIVE;
-  p.textContent=test?'Test':'Demo';p.className='pill'+(test?' warn':'');
+  p.hidden=BOOT!=='demo'&&!test&&!COACHMODE;a.hidden=!LIVE;
+  p.textContent=COACHMODE?'Coach':test?'Test':'Demo';p.className='pill'+(COACHMODE?' good':test?' warn':'');
+  var cb=$('#coachbar');if(cb){cb.hidden=!(COACHMODE&&BOOT!=='coach');$('#coachwho').textContent=coachName;}
   if(test){p.title='Test tabs: '+Object.keys(TESTTABS).map(function(k){return k+(TESTTABS[k]?' on':' off');}).join(', ');}
   if(LIVE){a.textContent=(CFG.client||'?').charAt(0).toUpperCase();a.title=CFG.client;}
   $$('#nav [data-tab]').forEach(function(n){n.hidden=!tabOn(n.getAttribute('data-tab'));});
@@ -727,11 +745,12 @@ function bootHtml(){
   if(BOOT==='loading'){return '<div class="card quiet"><div class="eyebrow">One moment</div><div class="h1">Loading your programme</div><div class="bar"><i class="load"></i></div></div>';}
   return '<div class="card quiet"><div class="eyebrow">'+(BOOTNORETRY?'Can’t open the app':'Connection problem')+'</div><div class="h1">'+(BOOTNORETRY?'Check your link':'Couldn’t load')+'</div><div class="meta">'+esc(BOOTERR)+'</div>'+
     (BOOTNORETRY?'':'<button class="btn primary block" type="button" id="bootretry">Try again</button>')+
-    (CFG.previewToken?'<button class="btn ghost block" type="button" id="bootdemo">View the demo instead</button>':'')+'</div>';
+    (COACHMODE?'<button class="btn ghost block" type="button" id="bootclients">Back to clients</button>':CFG.previewToken?'<button class="btn ghost block" type="button" id="bootdemo">View the demo instead</button>':'')+'</div>';
 }
 function wireBoot(){
   var r=$('#bootretry');if(r){r.addEventListener('click',startLive);}
   var d=$('#bootdemo');if(d){d.addEventListener('click',function(){BOOT='demo';LIVE=false;setPill();route();});}
+  var c=$('#bootclients');if(c){c.addEventListener('click',openCoach);}
 }
 function sheetError(e,retry){
   var stale=e&&e.code==='stale';
@@ -765,7 +784,9 @@ function commitLive(btn){
   live.busy=true;
   if(btn){btn.disabled=true;btn.textContent='Saving…';}
   var s=curSession(),name=s.name,cy=live.state.cycle,se=live.state.session,entries=entriesNow();
-  api('complete',{cycle:cy,session:se,entries:entries},60000).then(function(done){
+  var creq={cycle:cy,session:se,entries:entries,sessionName:name};
+  if(COACHMODE){creq.by='coach';creq.coach=COACH;}
+  api('complete',creq,60000).then(function(done){
     train.inputs={};
     var pbs=(done&&done.newPbs)||[];
     return fetchLive().then(function(){
@@ -1381,10 +1402,86 @@ function pbSection(){
     (list.length>shown.length?'<button class="btn ghost block" type="button" id="pbmore">Show all '+list.length+'</button>':'')+'</div>';
 }
 
+/* ---------- coach mode ---------- */
+/* One private link (?coach=KEY) lists every active client. Pick one to log
+   their session, check their log or look at their bests. */
+function getCoachKey(){
+  var q=null,k='';
+  try{q=new URLSearchParams(location.search);}catch(e){}
+  if(q&&q.get('coach')){k=q.get('coach');try{localStorage.setItem('ts_coach',k);}catch(e){}return k;}
+  if(q&&q.get('t')){return '';}
+  try{k=localStorage.getItem('ts_coach')||'';}catch(e){}
+  return k;
+}
+function coachRecent(){try{return JSON.parse(localStorage.getItem('ts_coach_recent')||'[]');}catch(e){return [];}}
+function stClass(t){
+  if(/^Gone quiet/i.test(t)){return 'bad';}
+  if(/^(No daily log|Missed)/i.test(t)){return 'warn';}
+  if(/^(Flying|Sent|On track)/i.test(t)){return 'good';}
+  if(/^New/i.test(t)){return 'new';}
+  return '';
+}
+function shortStatus(t){return String(t||'').replace(/:.*$/,'');}
+function openCoach(){
+  COACHMODE=true;BOOT='coach';LIVE=false;TOKEN='';coachName='';
+  if(location.hash){history.replaceState(null,'',location.pathname+location.search);}
+  route();
+  apiCall({action:'coach_clients',coach:COACH},25000).then(function(j){
+    if(!j||!j.ok){coachErr=(j&&j.message)||'This coach link is not recognised.';coachList=null;}
+    else{coachErr='';coachList=j.clients||[];}
+    if(BOOT==='coach'){renderCoach();}
+  },function(e){coachErr=(e&&e.message)||'Couldn’t connect.';if(BOOT==='coach'){renderCoach();}});
+}
+function renderCoach(){
+  var v=$('#view-home');
+  if(coachErr){
+    v.innerHTML='<div class="card quiet"><div class="eyebrow">Coach</div><div class="h1">Couldn’t load clients</div><div class="meta">'+esc(coachErr)+'</div><button class="btn primary block" type="button" id="coachretry">Try again</button></div>';
+    $('#coachretry').addEventListener('click',openCoach);return;
+  }
+  if(!coachList){v.innerHTML='<div class="card quiet"><div class="eyebrow">Coach</div><div class="h1">Loading clients</div><div class="bar"><i class="load"></i></div></div>';return;}
+  var q=coachQuery.trim().toLowerCase();
+  var list=coachList.filter(function(c){return !q||c.name.toLowerCase().indexOf(q)>=0;});
+  var row=function(c){
+    var lt=String(c.lastTrained||'');var meta=[lt&&lt!=='never'?'Last trained '+lt:'Not trained yet',c.block].filter(Boolean).join(' · ');
+    return '<button class="crow" type="button" data-tok="'+esc(c.token)+'"><span><b>'+esc(c.name)+'</b><span class="meta">'+esc(meta||'No sessions yet')+'</span></span>'+
+      (c.status?'<span class="st '+stClass(c.status)+'">'+esc(shortStatus(c.status))+'</span>':'')+'</button>';
+  };
+  var real=list.filter(function(c){return !c.test;}),tests=list.filter(function(c){return c.test;});
+  var rec=q?[]:coachRecent().filter(function(r){return coachList.some(function(c){return c.token===r.token;});}).slice(0,4);
+  v.innerHTML='<div class="title"><div class="eyebrow">Coach</div><div class="h1">Your clients</div></div>'+
+    '<input class="csearch" id="csearch" type="search" placeholder="Find a client" autocomplete="off" value="'+esc(coachQuery)+'">'+
+    (rec.length?'<div class="eyebrow">Recent</div><div class="recent">'+rec.map(function(r){return '<button class="chip" type="button" data-tok="'+esc(r.token)+'">'+esc(r.name)+'</button>';}).join('')+'</div>':'')+
+    '<div class="eyebrow">'+real.length+' active client'+(real.length===1?'':'s')+'</div><div class="clist">'+(real.map(row).join('')||'<div class="meta">No clients match.</div>')+'</div>'+
+    (tests.length?'<div class="eyebrow">Test clients</div><div class="clist">'+tests.map(row).join('')+'</div>':'');
+  var s=$('#csearch');
+  s.addEventListener('input',function(){coachQuery=s.value;var pos=s.selectionStart;renderCoach();var n=$('#csearch');n.focus();try{n.setSelectionRange(pos,pos);}catch(e){}});
+  $$('[data-tok]',v).forEach(function(b){b.addEventListener('click',function(){
+    var c=coachList.filter(function(x){return x.token===b.dataset.tok;})[0];if(c){pickClient(c);}
+  });});
+}
+function pickClient(c){
+  var rec=coachRecent().filter(function(r){return r.token!==c.token;});
+  rec.unshift({token:c.token,name:c.name});
+  try{localStorage.setItem('ts_coach_recent',JSON.stringify(rec.slice(0,6)));}catch(e){}
+  TOKEN=c.token;coachName=c.name;
+  LIVE=false;LOGLIVE=false;nut=null;nutFail=null;mealPick={};mealSlot=0;
+  state.weights={};state.logs={};state.feedback={};state.pbs=null;state.history=[];
+  train.inputs={};drafts={};logDate=todayIso;logSaved=null;
+  live.state=null;live.names=[];live.cur=null;live.key='';
+  TESTTABS={};CLIENTTABS={};pbAll=false;
+  location.hash='#train';
+  startLive();
+}
+
 /* ---------- routing ---------- */
 var VIEWS=['home','log','train','meals','checkin','progress'];
 var RENDER={home:renderHome,log:renderLog,train:renderTrain,meals:renderMeals,checkin:renderCheckin,progress:function(){if(LIVE){renderProgressLive();}else{renderProgress();}}};
 function route(){
+  if(BOOT==='coach'){
+    closeSheet();setPill();$('#nav').hidden=true;
+    VIEWS.forEach(function(n){$('#view-'+n).hidden=n!=='home';});
+    renderCoach();return;
+  }
   var h=(location.hash||'#home').slice(1);
   if(VIEWS.indexOf(h)<0||!tabOn(h)){h='home';}
   if(BOOT==='loading'||BOOT==='error'){
@@ -1404,8 +1501,12 @@ document.addEventListener('click',function(ev){
   if(g){location.hash=g.dataset.go;}
 });
 window.addEventListener('hashchange',route);
-TOKEN=getToken();loadTestTabs();
-if(CFG.api&&TOKEN){startLive();}
+COACH=CFG.api?getCoachKey():'';
+$('#coachswitch').addEventListener('click',function(){coachQuery='';openCoach();});
+if(COACH){openCoach();}
+else{TOKEN=getToken();loadTestTabs();}
+if(COACH){/* coach mode */}
+else if(CFG.api&&TOKEN){startLive();}
 else if(CFG.api){BOOT='error';BOOTNORETRY=true;BOOTERR='This link isn’t complete. Open the full link '+CFG.coach+' sent you.';route();}
 else{route();}
 })();
