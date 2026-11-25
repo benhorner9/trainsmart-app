@@ -1521,7 +1521,8 @@ function stClass(t){
   if(/^Gone quiet/i.test(t)){return 'bad';}
   if(/^Payment overdue/i.test(t)){return 'bad';}
   if(/^(No daily log|Missed|Payment)/i.test(t)){return 'warn';}
-  if(/^(Flying|Sent|On track)/i.test(t)){return 'good';}
+  if(/^(Flying|Sent|On track|New PB|Milestone|Step goal|Logging streak)/i.test(t)){return 'good';}
+  if(/^Next up/i.test(t)){return '';}
   if(/^New/i.test(t)){return 'new';}
   return '';
 }
