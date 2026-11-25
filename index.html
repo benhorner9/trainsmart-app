@@ -246,6 +246,10 @@ th{font:700 11px/1 var(--font-body);letter-spacing:.1em;text-transform:uppercase
 td{padding:9px 0;border-top:1px solid var(--line)}
 th:not(:first-child),td:not(:first-child){text-align:right}
 .up{color:var(--warn)} .down{color:var(--good)}
+.gain{color:var(--good)}
+.liftpick{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;margin:0 -16px;padding:0 16px}
+.liftpick::-webkit-scrollbar{display:none}
+.liftpick .chip{flex:none;min-height:34px;font-size:13px}
 
 .photos{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
 .photo{display:flex;flex-direction:column;gap:6px;font:600 12px/1 var(--font-body);color:var(--mute);cursor:pointer;text-align:center}
@@ -715,7 +719,7 @@ function applyLive(home,sess,hist,nutr){
 }
 function soft(p){return p.catch(function(e){return {ok:false,error:(e&&e.code)||'error',message:(e&&e.message)||''};});}
 function fetchLive(){
-  return Promise.all([api('home'),api('session'),api('history'),soft(api('nutrition')),soft(api('logs')),soft(api('pbs'))]).then(function(r){
+  return Promise.all([api('home'),api('session'),api('history'),soft(api('nutrition')),soft(api('logs')),soft(api('pbs')),soft(api('trends'))]).then(function(r){
     applyLive(r[0],r[1],r[2],r[3]);
     var lg=r[4];
     if(lg&&lg.ok){
@@ -723,6 +727,7 @@ function fetchLive(){
       Object.keys(state.logs).forEach(function(k){if(state.logs[k].w!=null){state.weights[k]=state.logs[k].w;}});
     }
     state.pbs=r[5]&&r[5].ok?(r[5].pbs||[]):null;
+    state.trends=r[6]&&r[6].ok?r[6]:null;
   });
 }
 function setPill(){
@@ -1377,9 +1382,107 @@ function renderProgressLive(){
     '<div class="tiles"><div class="tile"><div class="eyebrow">Sessions</div><div class="num">'+completed+'<small>of '+TOTAL+'</small></div></div>'+
     '<div class="tile"><div class="eyebrow">Cycle</div><div class="num">'+Math.min(cycleNo(),CFG.cycles)+'<small>of '+CFG.cycles+'</small></div></div>'+
     '<div class="tile"><div class="eyebrow">This week</div><div class="num">'+Math.min(sessionsThisWeek(),CFG.plannedPerWeek)+'<small>of '+CFG.plannedPerWeek+'</small></div></div></div>'+
-    pbSection()+
+    trendsSection()+pbSection()+
     (cards?'<div class="eyebrow" style="margin-top:4px">Recent sessions</div>'+cards:'<div class="card"><div class="eyebrow">Recent sessions</div><div class="meta">Nothing yet. Finish your first session and your results will show here.</div></div>');
   var more=$('#pbmore',v);if(more){more.addEventListener('click',function(){pbAll=true;renderProgressLive();});}
+  $$('[data-lift]',v).forEach(function(b){b.addEventListener('click',function(){liftSel=b.dataset.lift;var y=window.scrollY;renderProgressLive();window.scrollTo(0,y);var on=$('.liftpick .chip.on');if(on){var pk=on.parentNode;pk.scrollLeft=on.offsetLeft-pk.clientWidth/2+on.offsetWidth/2;}});});
+}
+/* ---------- progress charts (live) ---------- */
+/* Bodyweight and steps come from the client's own daily log; lifts come
+   from their session history via the engine's "trends" action. */
+var liftSel='';
+function svgLine(pts,o){
+  // pts: [{t:ms,y:number}] sorted; o: {avg:[{t,y}], target:number, unit:'', dp:1, label:''}
+  o=o||{};var W=340,H=180,L=40,R=12,Tp=12,B=26;
+  var ys=pts.map(function(p){return p.y;}).concat(o.avg?o.avg.map(function(p){return p.y;}):[]);
+  if(o.target!=null){ys.push(o.target);}
+  var lo=Math.min.apply(null,ys),hi=Math.max.apply(null,ys);
+  var pad=Math.max((hi-lo)*0.12,o.minPad||1);lo-=pad;hi+=pad;
+  var t0=pts[0].t,t1=pts[pts.length-1].t;if(t1===t0){t0-=864e5;t1+=864e5;}
+  var X=function(t){return L+(t-t0)/(t1-t0)*(W-L-R);};
+  var Y=function(y){return Tp+(hi-y)/(hi-lo)*(H-Tp-B);};
+  var dp=o.dp==null?1:o.dp,g='';
+  [hi,(hi+lo)/2,lo].forEach(function(v){g+='<line x1="'+L+'" x2="'+(W-R)+'" y1="'+Y(v).toFixed(1)+'" y2="'+Y(v).toFixed(1)+'" style="stroke:var(--line)" stroke-width="1"/><text x="'+(L-6)+'" y="'+(Y(v)+4).toFixed(1)+'" text-anchor="end" font-size="11" style="fill:var(--mute)">'+fmt(v,dp)+'</text>';});
+  var xl=[t0,t1].map(function(t,i){var d=new Date(t);return '<text x="'+X(t).toFixed(1)+'" y="'+(H-7)+'" text-anchor="'+(i?'end':'start')+'" font-size="11" style="fill:var(--mute)">'+d.getDate()+' '+MONTHS[d.getMonth()]+'</text>';}).join('');
+  var tg=o.target!=null?'<line x1="'+L+'" x2="'+(W-R)+'" y1="'+Y(o.target).toFixed(1)+'" y2="'+Y(o.target).toFixed(1)+'" style="stroke:var(--good)" stroke-width="1.5" stroke-dasharray="4 4"/>':'';
+  var line=function(a,w,col){return a.length>1?'<polyline points="'+a.map(function(p){return X(p.t).toFixed(1)+','+Y(p.y).toFixed(1);}).join(' ')+'" fill="none" style="stroke:'+col+'" stroke-width="'+w+'" stroke-linejoin="round" stroke-linecap="round"/>':'';};
+  var dots=pts.map(function(p,i){var last=i===pts.length-1&&!o.avg;return '<circle cx="'+X(p.t).toFixed(1)+'" cy="'+Y(p.y).toFixed(1)+'" r="'+(o.avg?3:last?5.5:3.5)+'" style="fill:'+(o.avg?'var(--mute)':'var(--plate)')+(last?';stroke:var(--ink)':'')+'"'+(o.avg?' opacity=".6"':'')+' stroke-width="2"/>';}).join('');
+  var main=o.avg?line(o.avg,2.5,'var(--plate)'):line(pts,2.5,'var(--plate)');
+  var endDot=o.avg&&o.avg.length?(function(p){return '<circle cx="'+X(p.t).toFixed(1)+'" cy="'+Y(p.y).toFixed(1)+'" r="5.5" style="fill:var(--plate);stroke:var(--ink)" stroke-width="2"/>';})(o.avg[o.avg.length-1]):'';
+  return '<svg class="chart" viewBox="0 0 '+W+' '+H+'" role="img" aria-label="'+esc(o.label||'Chart')+'">'+g+tg+xl+(o.avg?dots+main:main+dots)+endDot+'</svg>';
+}
+function svgBars(rows,target){
+  // rows: [{label, v}] oldest first
+  var W=340,H=170,L=40,R=12,Tp=12,B=26;
+  var vals=rows.map(function(r){return r.v||0;});if(target){vals.push(target);}
+  var hi=Math.max.apply(null,vals.concat([1]))*1.12;
+  var Y=function(v){return Tp+(hi-v)/hi*(H-Tp-B);};
+  var bw=(W-L-R)/rows.length,g='';
+  [hi,hi/2].forEach(function(v){g+='<line x1="'+L+'" x2="'+(W-R)+'" y1="'+Y(v).toFixed(1)+'" y2="'+Y(v).toFixed(1)+'" style="stroke:var(--line)" stroke-width="1"/><text x="'+(L-6)+'" y="'+(Y(v)+4).toFixed(1)+'" text-anchor="end" font-size="11" style="fill:var(--mute)">'+(v>=1000?fmt(v/1000,1)+'k':fmt(v))+'</text>';});
+  var bars=rows.map(function(r,i){
+    var x=L+i*bw+bw*0.18,w=bw*0.64,last=i===rows.length-1;
+    var lab='<text x="'+(x+w/2).toFixed(1)+'" y="'+(H-7)+'" text-anchor="middle" font-size="10" style="fill:var(--mute)">'+esc(r.label)+'</text>';
+    if(r.v==null){return lab;}
+    var hit=target&&r.v>=target;
+    return '<rect x="'+x.toFixed(1)+'" y="'+Y(r.v).toFixed(1)+'" width="'+w.toFixed(1)+'" height="'+(Y(0)-Y(r.v)).toFixed(1)+'" rx="3" style="fill:'+(hit?'var(--good)':'var(--plate)')+'"'+(last?'':' opacity=".75"')+'/>'+lab;
+  }).join('');
+  var tg=target?'<line x1="'+L+'" x2="'+(W-R)+'" y1="'+Y(target).toFixed(1)+'" y2="'+Y(target).toFixed(1)+'" style="stroke:var(--good)" stroke-width="1.5" stroke-dasharray="4 4"/>':'';
+  return '<svg class="chart" viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Average daily steps by week">'+g+bars+tg+'</svg>';
+}
+function weightCard(){
+  var tr=state.trends||{},st=tr.start||{};
+  var pts=Object.keys(state.weights).sort().map(function(k){return {t:fromIso(k).getTime(),y:Number(state.weights[k]),d:k};});
+  if(st.w&&st.date&&(!pts.length||st.date<pts[0].d)){pts.unshift({t:fromIso(st.date).getTime(),y:Number(st.w),d:st.date,start:true});}
+  if(pts.length<2){
+    return '<div class="card"><div class="eyebrow">Bodyweight</div>'+(st.w?'<div class="row"><span class="num">'+kg(st.w)+'<small>kg at the start</small></span></div>':'')+
+      '<div class="hint">Log your bodyweight on the Log tab and your trend will build up here. A few weigh-ins a week is plenty.</div></div>';
+  }
+  // 7-day rolling average of the weigh-ins (the start weight counts as its own point)
+  var avgPts=pts.map(function(p){var w=pts.filter(function(q){return q.t<=p.t&&q.t>p.t-7*864e5;});return {t:p.t,y:avg(w.map(function(q){return q.y;}))};});
+  var first=pts[0],now=avgPts[avgPts.length-1].y,chg=now-first.y;
+  return '<div class="card"><div class="eyebrow">Bodyweight</div>'+
+    '<div class="tiles"><div class="tile"><div class="eyebrow">'+(first.start?'Start':fmtDate(new Date(first.t)))+'</div><div class="num">'+fmt(first.y,1)+'<small>kg</small></div></div>'+
+    '<div class="tile"><div class="eyebrow">Now (avg)</div><div class="num">'+fmt(now,1)+'<small>kg</small></div></div>'+
+    '<div class="tile"><div class="eyebrow">Change</div><div class="num '+(chg>0?'up':'down')+'">'+signed(chg)+'<small>kg</small></div></div></div>'+
+    svgLine(pts,{avg:avgPts,dp:1,minPad:0.5,label:'Bodyweight over time with 7-day average'})+
+    '<div class="hint">Dots are your weigh-ins. The line is your 7-day average, which is the number to watch: daily weight jumps around.</div></div>';
+}
+function stepsCard(){
+  var tgt=(state.trends&&state.trends.stepsTarget)||null,rows=[],any=false;
+  for(var i=7;i>=0;i--){
+    var mon=addDays(monday,-7*i),vals=[];
+    for(var j=0;j<7;j++){var k=iso(addDays(mon,j));var e=state.logs[k];if(e&&e.steps!=null){vals.push(Number(e.steps));}}
+    if(vals.length){any=true;}
+    rows.push({label:mon.getDate()+' '+MONTHS[mon.getMonth()],v:vals.length?Math.round(avg(vals)):null,n:vals.length});
+  }
+  if(!any){return '';}
+  var cur=rows[rows.length-1];
+  return '<div class="card"><div class="eyebrow">Steps · daily average by week</div>'+
+    '<div class="row"><span class="num">'+(cur.v!=null?fmt(cur.v):'–')+'<small>this week</small></span>'+(tgt?'<span class="meta">Target '+fmt(tgt)+'</span>':'')+'</div>'+
+    svgBars(rows,tgt)+'<div class="hint">Each bar is the average of the days you logged that week'+(tgt?'. Green bars hit your target (the dashed line).':'.')+'</div></div>';
+}
+function liftCard(){
+  var lifts=((state.trends&&state.trends.lifts)||[]).filter(function(l){return l.points.length>=2;});
+  if(!lifts.length){
+    var some=state.trends&&state.trends.lifts&&state.trends.lifts.length;
+    return some?'<div class="card"><div class="eyebrow">Lifts</div><div class="hint">Your strength charts appear once you’ve done a lift in two sessions.</div></div>':'';
+  }
+  var cur=lifts.filter(function(l){return l.exercise===liftSel;})[0]||lifts[0];liftSel=cur.exercise;
+  var p=cur.points,first=p[0],last=p[p.length-1],best=Math.max.apply(null,p.map(function(x){return x.v;}));
+  var load=cur.kind==='load',d=last.v-first.v;
+  var head=load?'<span class="num">'+kg(last.v)+'<small>kg est. 1RM</small></span>':'<span class="num">'+last.v+'<small>reps</small></span>';
+  var chg=d===0?'Same as '+fmtDate(fromIso(first.d)):(d>0?'+':'−')+(load?kg(Math.abs(d))+' kg':Math.abs(d)+' reps')+' since '+fmtDate(fromIso(first.d));
+  var chips=lifts.map(function(l){return '<button class="chip'+(l===cur?' on':'')+'" type="button" data-lift="'+esc(l.exercise)+'" aria-pressed="'+(l===cur)+'">'+esc(nice(l.exercise))+'</button>';}).join('');
+  return '<div class="card"><div class="eyebrow">Lifts · '+(load?'estimated 1-rep max':'most reps in a set')+'</div>'+
+    '<div class="chips liftpick" role="group" aria-label="Pick a lift">'+chips+'</div>'+
+    '<div class="row">'+head+'<span class="meta '+(d>0?'gain':'')+'">'+esc(chg)+'</span></div>'+
+    svgLine(p.map(function(x){return {t:fromIso(x.d).getTime(),y:x.v};}),{dp:load?0:0,minPad:load?2.5:1,label:nice(cur.exercise)+' over time'})+
+    '<div class="hint">Last time: '+(load?kg(last.load)+' kg × '+last.reps:last.reps+' reps')+', '+fmtDate(fromIso(last.d))+'. '+
+    (load?'Est. 1RM turns your best set into one number, so heavier and more reps both count. Best so far '+kg(best)+' kg.':'Best so far '+best+' reps.')+'</div></div>';
+}
+function trendsSection(){
+  var html=weightCard()+stepsCard()+liftCard();
+  return html?'<div class="eyebrow" style="margin-top:4px">Trends</div>'+html:'';
 }
 var pbAll=false;
 function pbSection(){
@@ -1416,7 +1519,8 @@ function getCoachKey(){
 function coachRecent(){try{return JSON.parse(localStorage.getItem('ts_coach_recent')||'[]');}catch(e){return [];}}
 function stClass(t){
   if(/^Gone quiet/i.test(t)){return 'bad';}
-  if(/^(No daily log|Missed)/i.test(t)){return 'warn';}
+  if(/^Payment overdue/i.test(t)){return 'bad';}
+  if(/^(No daily log|Missed|Payment)/i.test(t)){return 'warn';}
   if(/^(Flying|Sent|On track)/i.test(t)){return 'good';}
   if(/^New/i.test(t)){return 'new';}
   return '';
@@ -1465,7 +1569,7 @@ function pickClient(c){
   try{localStorage.setItem('ts_coach_recent',JSON.stringify(rec.slice(0,6)));}catch(e){}
   TOKEN=c.token;coachName=c.name;
   LIVE=false;LOGLIVE=false;nut=null;nutFail=null;mealPick={};mealSlot=0;
-  state.weights={};state.logs={};state.feedback={};state.pbs=null;state.history=[];
+  state.weights={};state.logs={};state.feedback={};state.pbs=null;state.trends=null;state.history=[];liftSel='';
   train.inputs={};drafts={};logDate=todayIso;logSaved=null;
   live.state=null;live.names=[];live.cur=null;live.key='';
   TESTTABS={};CLIENTTABS={};pbAll=false;
