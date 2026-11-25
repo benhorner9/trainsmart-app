@@ -247,6 +247,22 @@ td{padding:9px 0;border-top:1px solid var(--line)}
 th:not(:first-child),td:not(:first-child){text-align:right}
 .up{color:var(--warn)} .down{color:var(--good)}
 .gain{color:var(--good)}
+.gpart{margin:14px 0 6px}
+.gitem .gname{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:6px}
+.gitem .meta{margin-bottom:8px}
+.gitem .meta b{color:var(--chalk)}
+.gdone{width:100%}
+.unitbox{position:relative;display:block}
+.unitbox .unit{position:absolute;right:12px;top:50%;transform:translateY(-50%);color:var(--mute);font-size:13px;pointer-events:none}
+.gcard .row{margin:4px 0}
+.gnav{display:flex;gap:6px}
+.gnav .btn{padding:7px 12px;font-size:13px;min-height:0}
+.gmems{margin-top:10px}
+.chip.gmem.on{background:rgba(52,211,153,.12);border-color:var(--good);color:var(--good)}
+.unitbox input,.field>input{width:100%;min-width:0;min-height:48px;padding:0 12px;background:var(--ink);border:1px solid var(--line);border-radius:10px;font-size:16px;color:var(--chalk)}
+.unitbox input{padding-right:36px}
+.unitbox input.bad,.field>input.bad{border-color:var(--bad)}
+.fgrid>.field{min-width:0}
 .coachbar .cbtns{display:flex;gap:6px}
 .addcardio{margin:2px 0 4px}
 .scale10{grid-template-columns:repeat(10,1fr);gap:4px}
@@ -338,11 +354,13 @@ details.amts li::before{content:'';position:absolute;left:0;top:9px;width:5px;he
     <section class="view" id="view-checkin" hidden></section>
     <section class="view" id="view-meals" hidden></section>
     <section class="view" id="view-progress" hidden></section>
+    <section class="view" id="view-group" hidden></section>
   </main>
   <nav id="nav" aria-label="Main">
     <a href="#home" data-tab="home"><svg viewBox="0 0 24 24"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/></svg>Home</a>
     <a href="#log" data-tab="log"><svg viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13 7l4 4"/></svg>Log</a>
     <a href="#train" data-tab="train"><svg viewBox="0 0 24 24"><path d="M3 9v6M6 6v12M18 6v12M21 9v6M6 12h12"/></svg>Train</a>
+    <a href="#group" data-tab="group"><svg viewBox="0 0 24 24"><circle cx="8" cy="8" r="3"/><circle cx="16" cy="8" r="3"/><path d="M2.5 20c.6-3.4 2.8-5.5 5.5-5.5s4.9 2.1 5.5 5.5M10.5 20c.6-3.4 2.8-5.5 5.5-5.5s4.9 2.1 5.5 5.5"/></svg>Group</a>
     <a href="#meals" data-tab="meals"><svg viewBox="0 0 24 24"><path d="M7 3v8M4.5 3v5a2.5 2.5 0 0 0 5 0V3M7 11v10"/><path d="M17 21V3c-2.2 1.4-3.5 4-3.5 7.5H17"/></svg>Meals</a>
     <a href="#progress" data-tab="progress"><svg viewBox="0 0 24 24"><path d="M4 19V5"/><path d="M4 19h16"/><path d="M7 14l4-4 3 3 5-6"/></svg>Progress</a>
   </nav>
@@ -388,7 +406,7 @@ var CFG={brand:'TrainSmart Coaching',coach:'Ben',client:'Alex',cycles:8,perCycle
        &on=&off=         clears the test settings again
      The settings are remembered on that phone, even when opened from the home-screen icon.
      Sample-data mode always shows every tab. */
-  tabs:{train:true,meals:true,progress:true,log:false,checkin:false}};
+  tabs:{train:true,meals:true,progress:true,log:false,checkin:false,group:false}};
 var LIVE=false,BOOT='demo',BOOTERR='',BOOTNORETRY=false,TOKEN='';
 var COACH='',COACHMODE=false,coachList=null,coachErr='',coachQuery='',coachName='';
 var live={state:null,names:[],cur:null,key:''};
@@ -640,7 +658,7 @@ function getToken(){
   return t||CFG.previewToken||'';
 }
 /* Per-client test switches from the link (&on= / &off=), remembered per client on this device. */
-var TABKEYS=['log','train','meals','progress','checkin'],TESTTABS={},CLIENTTABS={};
+var TABKEYS=['log','train','meals','progress','checkin','group'],TESTTABS={},CLIENTTABS={};
 /* Roster tick-boxes arrive from the sheet as true/false, "TRUE"/"FALSE", "yes"/"no" or blank. Blank = use the default. */
 function readClientTabs(raw){
   var out={};if(!raw||typeof raw!=='object'){return out;}
@@ -668,7 +686,7 @@ function loadTestTabs(){
 }
 function tabOn(t){
   if(t==='home'||!LIVE){return true;}
-  if(COACHMODE){return t==='checkin'?CFG.tabs.checkin!==false:true;}
+  if(COACHMODE){if(t==='group'){return !!CLIENTTABS.group;}return t==='checkin'?CFG.tabs.checkin!==false:true;}
   if(Object.prototype.hasOwnProperty.call(TESTTABS,t)){return !!TESTTABS[t];}
   if(Object.prototype.hasOwnProperty.call(CLIENTTABS,t)){return CLIENTTABS[t];}
   return CFG.tabs[t]!==false;
@@ -1403,6 +1421,131 @@ function renderProgressLive(){
   $$('[data-cpick]',v).forEach(function(b){b.addEventListener('click',function(){cardioSel=b.dataset.cpick;var y=window.scrollY;renderProgressLive();window.scrollTo(0,y);});});
   $$('[data-lift]',v).forEach(function(b){b.addEventListener('click',function(){liftSel=b.dataset.lift;var y=window.scrollY;renderProgressLive();window.scrollTo(0,y);var on=$('.liftpick .chip.on');if(on){var pk=on.parentNode;pk.scrollLeft=on.offsetLeft-pk.clientWidth/2+on.offsetWidth/2;}});});
 }
+/* ---------- group class ---------- */
+/* The Hub's Group Plan says which session the class is on. Members log their
+   own results; Ben can log for anyone from the coach app. */
+var grp=null,grpErr='',grpLoading=false,grpWant=null,grpIn={},grpDate=null,grpNote='',coachGroup=null,coachGroupErr='';
+function loadGroup(session){
+  grpLoading=true;grpErr='';
+  var req={};if(session){req.session=session;}
+  api('group',req,30000).then(function(j){grp=j;grpWant=session||null;grpLoading=false;grpIn={};grpNote='';
+    var sv=j.session&&j.session.items||[];sv.forEach(function(it){if(it.saved){grpIn[it.i]=groupInFrom(it.saved,it.record);}});
+    grpDate=j.savedDate||todayIso;
+    if(location.hash==='#group'){renderGroup();}
+  }).catch(function(e){grpLoading=false;grpErr=(e&&e.message)||'Couldn’t load the group class.';if(location.hash==='#group'){renderGroup();}});
+}
+function groupInFrom(s,rec){
+  return {load:s.load!=null?String(s.load):'',reps:s.reps!=null?String(s.reps):'',time:s.secs?fmtDur(s.secs):'',dist:s.dist!=null?String(s.dist):'',rounds:s.rounds||'',done:!!s.done};
+}
+function groupField(it){
+  var v=grpIn[it.i]||{},id='g'+it.i;
+  var f=function(k,label,mode,ph,unit){return '<label class="field"><span class="fl">'+label+'</span><span class="unitbox"><input data-gi="'+it.i+'" data-gk="'+k+'" type="text" inputmode="'+mode+'" autocomplete="off" placeholder="'+ph+'" value="'+esc(v[k]||'')+'">'+(unit?'<span class="unit">'+unit+'</span>':'')+'</span></label>';};
+  switch(it.record){
+    case 'Weight & reps':return '<div class="fgrid">'+f('load','Weight','decimal','0','kg')+f('reps','Reps','numeric','0','')+'</div>';
+    case 'Time':return '<div class="fgrid">'+f('time','Time','numeric','m:ss','')+'<div></div></div>';
+    case 'Distance':return '<div class="fgrid">'+f('dist','Distance','numeric','0','m')+'<div></div></div>';
+    case 'Reps':return '<div class="fgrid">'+f('reps','Reps','numeric','0','')+'<div></div></div>';
+    case 'Rounds':return '<div class="fgrid">'+f('rounds','Rounds','text','5 + 12','')+'<div></div></div>';
+    default:return '<button type="button" class="chip gdone'+(v.done?' on':'')+'" data-gdone="'+it.i+'" aria-pressed="'+!!v.done+'">'+(v.done?'✓ Done':'Tick when done')+'</button>';
+  }
+}
+function renderGroup(){
+  var v=$('#view-group');
+  if(!LIVE){v.innerHTML='<div class="card quiet"><div class="eyebrow">Group class</div><div class="meta">The group class shows here when you open your own app link.</div></div>';return;}
+  if(!grp&&!grpErr){v.innerHTML='<div class="card quiet"><div class="eyebrow">Group class</div><div class="h1">Loading</div><div class="bar"><i class="load"></i></div></div>';if(!grpLoading){loadGroup();}return;}
+  if(grpErr){v.innerHTML='<div class="card quiet"><div class="eyebrow">Group class</div><div class="meta">'+esc(grpErr)+'</div><button class="btn primary block" type="button" id="gretry">Try again</button></div>';$('#gretry').addEventListener('click',function(){grpErr='';loadGroup(grpWant);renderGroup();});return;}
+  if(!grp.ready){v.innerHTML='<div class="card quiet"><div class="eyebrow">Group class</div><div class="h1">Nothing planned yet</div><div class="meta">'+esc(grp.reason||'')+'</div></div>';return;}
+  var s=grp.session,isCur=s.num===grp.current,yIso=iso(addDays(today,-1)),who=COACHMODE?esc(coachName||'them'):'you';
+  var parts='',lastPart=null;
+  s.items.forEach(function(it){
+    if(it.part&&it.part!==lastPart){parts+='<div class="eyebrow gpart">'+esc(it.part)+'</div>';lastPart=it.part;}
+    parts+='<div class="card gitem"><div class="gname"><b>'+esc(it.exercise)+'</b>'+(it.target?'<span class="pill">'+esc(it.target)+'</span>':'')+'</div>'+
+      (it.notes?'<div class="meta">'+esc(it.notes)+'</div>':'')+
+      (it.last?'<div class="meta">Last time: <b>'+esc(it.last.text)+'</b> · '+fmtDate(fromIso(it.last.date))+'</div>':'')+
+      groupField(it)+'<div class="err" id="gerr-'+it.i+'"></div></div>';
+  });
+  v.innerHTML='<div class="title"><div class="eyebrow">Group class · Session '+s.num+(isCur?'':' (earlier session)')+'</div><div class="h1">'+esc(s.name||'Session '+s.num)+'</div>'+
+      '<div class="meta">'+s.items.length+' part'+(s.items.length===1?'':'s')+(grp.savedDate?' · Saved '+fmtDate(fromIso(grp.savedDate))+'. Change anything and save again.':'')+'</div></div>'+
+    '<div class="chips" role="group" aria-label="Day"><button type="button" class="chip'+(grpDate===todayIso?' on':'')+'" data-gday="'+todayIso+'">Today</button><button type="button" class="chip'+(grpDate===yIso?' on':'')+'" data-gday="'+yIso+'">Yesterday</button></div>'+
+    parts+
+    '<label class="field"><span class="fl">Notes (optional)</span><textarea id="g-notes" rows="2" placeholder="How it went, scaled anything…">'+esc(grpNote)+'</textarea></label>'+
+    '<div class="err" id="g-err" role="alert"></div>'+
+    '<button class="btn primary block" type="button" id="g-save">'+(COACHMODE?'Save for '+esc(coachName||'client'):'Save my class')+'</button>'+
+    (COACHMODE?'<button class="btn ghost block" type="button" id="g-here">Just mark '+who+' as here</button>':'')+
+    (isCur&&grp.prev?'<button class="btn ghost block" type="button" id="g-prev">Log the last class instead (Session '+grp.prev.num+')</button>':'')+
+    (!isCur?'<button class="btn ghost block" type="button" id="g-cur">Back to the current session</button>':'');
+  $$('[data-gday]',v).forEach(function(b){b.addEventListener('click',function(){grpDate=b.dataset.gday;renderGroup();});});
+  $$('[data-gi]',v).forEach(function(inp){inp.addEventListener('input',function(){var o=grpIn[inp.dataset.gi]||(grpIn[inp.dataset.gi]={});o[inp.dataset.gk]=inp.value;});});
+  $$('[data-gdone]',v).forEach(function(b){b.addEventListener('click',function(){var o=grpIn[b.dataset.gdone]||(grpIn[b.dataset.gdone]={});o.done=!o.done;b.classList.toggle('on',o.done);b.setAttribute('aria-pressed',o.done);b.textContent=o.done?'✓ Done':'Tick when done';});});
+  $('#g-notes').addEventListener('input',function(ev){grpNote=ev.target.value;});
+  $('#g-save').addEventListener('click',function(){saveGroup(false);});
+  if($('#g-here')){$('#g-here').addEventListener('click',function(){saveGroup(true);});}
+  if($('#g-prev')){var pn=grp.prev.num;$('#g-prev').onclick=function(){grp=null;loadGroup(pn);renderGroup();};}
+  if($('#g-cur')){$('#g-cur').onclick=function(){grp=null;loadGroup(null);renderGroup();};}
+}
+function saveGroup(hereOnly){
+  var s=grp.session,results=[],bad=false;
+  $$('.gitem .err').forEach(function(e){e.textContent='';});
+  if(!hereOnly){
+    s.items.forEach(function(it){
+      var v=grpIn[it.i]||{},r={i:it.i},has=false,err='';
+      var n=function(x){var t=String(x||'').trim();return t===''?null:Number(t);};
+      if(it.record==='Weight & reps'){r.load=n(v.load);r.reps=n(v.reps);has=r.load!==null||r.reps!==null;if((r.load!==null&&isNaN(r.load))||(r.reps!==null&&isNaN(r.reps))){err='Numbers only.';}}
+      else if(it.record==='Time'){if(String(v.time||'').trim()){var p=parseDur(v.time);if(!p||p.err){err=(p&&p.err)||'Check the time.';}else{r.secs=p.secs;has=true;}}}
+      else if(it.record==='Distance'){r.dist=n(v.dist);has=r.dist!==null;if(has&&isNaN(r.dist)){err='Numbers only.';}}
+      else if(it.record==='Reps'){r.reps=n(v.reps);has=r.reps!==null;if(has&&isNaN(r.reps)){err='Numbers only.';}}
+      else if(it.record==='Rounds'){r.rounds=String(v.rounds||'').trim();has=!!r.rounds;}
+      else{r.done=!!v.done;has=r.done;}
+      if(err){bad=true;$('#gerr-'+it.i).textContent=err;}
+      if(has&&!err){results.push(r);}
+    });
+    if(bad){$('#g-err').textContent='Check the boxes marked above.';return;}
+    if(!results.length&&!grpNote.trim()){$('#g-err').textContent='Fill in at least one result, or use “mark as here”.';return;}
+    if(grpNote.trim()){if(results.length){results[0].notes=grpNote.trim();}else{results.push({i:0,done:true,notes:grpNote.trim()});}}
+  }
+  var btn=$(hereOnly?'#g-here':'#g-save'),label=btn.textContent;btn.disabled=true;btn.textContent='Saving…';
+  var req={session:s.num,date:grpDate,results:results};if(COACHMODE){req.by='coach';req.coach=COACH;}
+  api('group_save',req,60000).then(function(r){
+    var pbs=r.newPbs||[];
+    toast(hereOnly?'Marked as here':pbs.length?'New PB! '+pbs[0].exercise+' '+pbs[0].text:'Class saved');
+    coachGroup=null;
+    if(!hereOnly){var keep=grpWant;grp=null;loadGroup(keep);renderGroup();}else{btn.disabled=false;btn.textContent=label;}
+  }).catch(function(e){btn.disabled=false;btn.textContent=label;$('#g-err').textContent=(e&&e.message)||'That didn’t save. Try again.';});
+}
+/* Coach list: the group class card (current session, move on/back, members). */
+function loadCoachGroup(){
+  apiCall({action:'group_class',coach:COACH},30000).then(function(j){
+    if(!j||!j.ok){throw new Error((j&&j.message)||'Couldn’t load the group class.');}
+    coachGroup=j;coachGroupErr='';if(BOOT==='coach'){renderCoach();}
+  }).catch(function(e){coachGroupErr=(e&&e.message)||'Couldn’t load the group class.';if(BOOT==='coach'){renderCoach();}});
+}
+function coachGroupCard(){
+  if(coachGroupErr){return '<div class="card quiet gcard"><div class="eyebrow">Group class</div><div class="meta">'+esc(coachGroupErr)+'</div></div>';}
+  if(!coachGroup){return '<div class="card quiet gcard"><div class="eyebrow">Group class</div><div class="meta">Loading…</div></div>';}
+  var g=coachGroup,c=g.current;
+  if(!c){return '<div class="card quiet gcard"><div class="eyebrow">Group class</div><div class="meta">Add sessions on the Hub’s Group Plan tab to start.</div></div>';}
+  var real=g.members.filter(function(m){return !m.test;}),here=real.filter(function(m){return m.here;}).length;
+  var mem=g.members.map(function(m){return '<button class="chip gmem'+(m.here?' on':'')+'" type="button" data-gtok="'+esc(m.token)+'">'+(m.here?'✓ ':'')+esc(m.name)+'</button>';}).join('');
+  return '<div class="card gcard"><div class="eyebrow">Group class</div>'+
+    '<div class="row"><span><b>Session '+c.num+'</b>'+(c.name?' · '+esc(c.name):'')+'</span><span class="gnav"><button class="btn ghost" type="button" id="gback" aria-label="Previous session">‹</button><button class="btn ghost" type="button" id="gnext" aria-label="Next session">Next ›</button></span></div>'+
+    '<div class="meta">'+(real.length?here+' of '+real.length+' here today. Tap someone to log for them.':'No members yet. Tick Group on the Hub’s Roster for each member.')+'</div>'+
+    (g.members.length?'<div class="recent gmems">'+mem+'</div>':'')+'</div>';
+}
+function wireCoachGroup(v){
+  $$('[data-gtok]',v).forEach(function(b){b.addEventListener('click',function(){
+    var m=coachGroup.members.filter(function(x){return x.token===b.dataset.gtok;})[0];if(m){pickClient({token:m.token,name:m.name},'#group');}
+  });});
+  var step=function(d){
+    var ss=coachGroup.sessions,i=ss.map(function(s){return s.num;}).indexOf(coachGroup.current.num);if(i<0||!ss.length){return;}
+    var target=ss[(i+d+ss.length)%ss.length];
+    $('#gnext').disabled=true;$('#gback').disabled=true;
+    apiCall({action:'group_set',coach:COACH,session:target.num},30000).then(function(j){
+      if(!j||!j.ok){throw new Error((j&&j.message)||'Couldn’t change the session.');}
+      coachGroup.current={num:j.current.num,name:j.current.name};toast('Class now on Session '+j.current.num);renderCoach();
+    }).catch(function(e){toast((e&&e.message)||'Couldn’t change the session.');renderCoach();});
+  };
+  if($('#gnext')){$('#gnext').addEventListener('click',function(){step(1);});$('#gback').addEventListener('click',function(){step(-1);});}
+}
 /* ---------- cardio log ---------- */
 /* Any run, row, ski or bike effort: type, distance and time. Saved to the
    tracker's Cardio Log tab; best times per effort show on Progress. */
@@ -1716,7 +1859,8 @@ function renderCoach(){
   };
   var real=list.filter(function(c){return !c.test;}),tests=list.filter(function(c){return c.test;});
   var rec=q?[]:coachRecent().filter(function(r){return coachList.some(function(c){return c.token===r.token;});}).slice(0,4);
-  v.innerHTML='<div class="title"><div class="eyebrow">Coach</div><div class="h1">Your clients</div></div>'+
+  if(!coachGroup&&!coachGroupErr){loadCoachGroup();}
+  v.innerHTML='<div class="title"><div class="eyebrow">Coach</div><div class="h1">Your clients</div></div>'+(q?'':coachGroupCard())+
     '<input class="csearch" id="csearch" type="search" placeholder="Find a client" autocomplete="off" value="'+esc(coachQuery)+'">'+
     (rec.length?'<div class="eyebrow">Recent</div><div class="recent">'+rec.map(function(r){return '<button class="chip" type="button" data-tok="'+esc(r.token)+'">'+esc(r.name)+'</button>';}).join('')+'</div>':'')+
     '<div class="eyebrow">'+real.length+' active client'+(real.length===1?'':'s')+'</div><div class="clist">'+(real.map(row).join('')||'<div class="meta">No clients match.</div>')+'</div>'+
@@ -1726,8 +1870,9 @@ function renderCoach(){
   $$('[data-tok]',v).forEach(function(b){b.addEventListener('click',function(){
     var c=coachList.filter(function(x){return x.token===b.dataset.tok;})[0];if(c){pickClient(c);}
   });});
+  wireCoachGroup(v);
 }
-function pickClient(c){
+function pickClient(c,hash){
   var rec=coachRecent().filter(function(r){return r.token!==c.token;});
   rec.unshift({token:c.token,name:c.name});
   try{localStorage.setItem('ts_coach_recent',JSON.stringify(rec.slice(0,6)));}catch(e){}
@@ -1736,14 +1881,14 @@ function pickClient(c){
   state.weights={};state.logs={};state.feedback={};state.pbs=null;state.trends=null;state.cardio=[];state.history=[];liftSel='';cardioSel='';
   train.inputs={};drafts={};logDate=todayIso;logSaved=null;
   live.state=null;live.names=[];live.cur=null;live.key='';
-  TESTTABS={};CLIENTTABS={};pbAll=false;
-  location.hash='#train';
+  TESTTABS={};CLIENTTABS={};pbAll=false;grp=null;grpErr='';grpLoading=false;grpWant=null;grpIn={};grpNote='';
+  location.hash=hash||'#train';
   startLive();
 }
 
 /* ---------- routing ---------- */
-var VIEWS=['home','log','train','meals','checkin','progress'];
-var RENDER={home:renderHome,log:renderLog,train:renderTrain,meals:renderMeals,checkin:renderCheckin,progress:function(){if(LIVE){renderProgressLive();}else{renderProgress();}}};
+var VIEWS=['home','log','train','group','meals','checkin','progress'];
+var RENDER={group:renderGroup,home:renderHome,log:renderLog,train:renderTrain,meals:renderMeals,checkin:renderCheckin,progress:function(){if(LIVE){renderProgressLive();}else{renderProgress();}}};
 function route(){
   if(BOOT==='coach'){
     closeSheet();setPill();$('#nav').hidden=true;
