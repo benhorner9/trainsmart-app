@@ -305,6 +305,7 @@ th:not(:first-child),td:not(:first-child){text-align:right}
 .bkline{display:grid;grid-template-columns:56px 1fr auto;gap:8px;align-items:center;width:100%;text-align:left;padding:10px 0;border:0;border-top:1px solid var(--line);background:none;color:var(--chalk);font:inherit;cursor:pointer}
 .bkline .meta{font-size:12px}
 .bkday{margin-top:10px}
+.bkoff{color:var(--warn)}
 .hp{position:absolute;left:-9999px;width:1px;height:1px;opacity:0}
 select.csearch{appearance:none;-webkit-appearance:none}
 /* personal bests + coach feedback */
@@ -785,7 +786,7 @@ function setPill(){
 function startLive(){
   BOOT='loading';BOOTERR='';route();
   return fetchLive().then(function(){
-    LIVE=true;BOOT='live';if(!LOGLIVE){state.weights={};state.logs={};state.feedback={};}drafts={};state.checkin={sent:null,note:''};setPill();route();
+    LIVE=true;BOOT='live';if(!LOGLIVE){state.weights={};state.logs={};state.feedback={};}drafts={};state.checkin={sent:null,note:''};setPill();route();bookPreload();
   },function(e){BOOT='error';BOOTERR=(e&&e.message)||'Could not load your programme.';route();});
 }
 function bootHtml(){
@@ -1852,12 +1853,20 @@ function loadBook(){
     if(location.hash==='#book'){renderBook();}
   }).catch(function(e){bkLoading=false;bkErr=(e&&e.message)||'Couldn’t load bookings.';if(location.hash==='#book'){renderBook();}});
 }
+function bookPreload(){
+  if(COACHMODE||!CLIENTTABS.book){return;}
+  api('book',{},30000).then(function(j){
+    bk=j;if(!bkDay||!(j.days||[]).some(function(d){return d.date===bkDay;})){bkDay=j.days&&j.days.length?j.days[0].date:null;}
+    if(j.closed){CLIENTTABS.book=false;setPill();if(location.hash==='#book'){location.hash='#home';}}
+    else if(location.hash==='#book'){renderBook();}
+  }).catch(function(){});
+}
 function renderBook(){
   var v=$('#view-book');
   if(!LIVE){v.innerHTML='<div class="card quiet"><div class="eyebrow">Book</div><div class="meta">Booking shows here when you open your own app link.</div></div>';return;}
   if(!bk&&!bkErr){v.innerHTML='<div class="card quiet"><div class="eyebrow">Book</div><div class="h1">Loading</div><div class="bar"><i class="load"></i></div></div>';if(!bkLoading){loadBook();}return;}
   if(bkErr){v.innerHTML='<div class="card quiet"><div class="eyebrow">Book</div><div class="meta">'+esc(bkErr)+'</div><button class="btn primary block" type="button" id="bkretry">Try again</button></div>';$('#bkretry').addEventListener('click',function(){bkErr='';bk=null;renderBook();});return;}
-  if(!bk.ready){v.innerHTML='<div class="card quiet"><div class="eyebrow">Book</div><div class="h1">Booking opens soon</div><div class="meta">Message '+esc(CFG.coach)+' to book in for now.</div></div>';return;}
+  if(!bk.ready){v.innerHTML='<div class="card quiet"><div class="eyebrow">Book</div><div class="h1">'+(bk.closed?'Booking is closed':'Booking opens soon')+'</div><div class="meta">Message '+esc(CFG.coach)+' to book in for now.</div></div>';return;}
   var mine=bk.mine||[],cut=(bk.cancelH||0)*3600000,now=Date.now();
   var mv=bkMove?mine.filter(function(b){return b.id===bkMove;})[0]:null;
   var rows=mine.map(function(b){
@@ -1923,7 +1932,7 @@ function coachBookCard(){
     list+='<button class="bkline" type="button" data-cbk="'+esc(b.id)+'"><b>'+esc(b.time)+'</b><span>'+esc(b.name)+'</span><span class="meta">'+esc(b.type)+'</span></button>';
   });
   return '<div class="card bkcard"><div class="eyebrow">Bookings</div>'+
-    (cBook.ready?'':'<div class="meta">Set your hours on the Hub’s Booking Settings tab to open booking.</div>')+
+    (cBook.ready?'':'<div class="meta">Set your hours on the Hub’s Booking Settings tab to open booking.</div>')+(cBook.open===false?'<div class="meta bkoff">Booking is <b>switched off</b> for clients and the free session link. You can still book people in here. Turn it back on with the Booking open tick on the Hub’s Booking Settings tab.</div>':'')+
     (list||'<div class="meta">Nothing booked yet.</div>')+
     ((cBook.upcoming||[]).length>10?'<div class="meta">+ '+(cBook.upcoming.length-10)+' more on the Hub’s Bookings tab</div>':'')+
     '<button class="btn primary block" type="button" id="cbnew">+ Book someone in</button></div>';
@@ -1998,7 +2007,7 @@ function loadLead(){
   ld.days=null;ld.err='';renderLead();
   apiCall({action:'lead_book',op:'slots'},30000).then(function(j){
     if(!j||!j.ok){ld.err=(j&&j.message)||'Couldn’t load times.';ld.days=[];}
-    else{ld.days=j.ready?(j.days||[]):[];ld.len=j.len||60;if(!ld.day||!ld.days.some(function(d){return d.date===ld.day;})){ld.day=ld.days.length?ld.days[0].date:null;}}
+    else{ld.closed=!!j.closed;ld.days=j.ready?(j.days||[]):[];ld.len=j.len||60;if(!ld.day||!ld.days.some(function(d){return d.date===ld.day;})){ld.day=ld.days.length?ld.days[0].date:null;}}
     renderLead();
   },function(e){ld.err=(e&&e.message)||'Couldn’t connect.';ld.days=[];renderLead();});
 }
@@ -2010,7 +2019,7 @@ function renderLead(){
   }
   var canBook=ld.slot&&ld.name.trim().length>1&&String(ld.phone).replace(/[^\d]/g,'').length>=10&&!ld.busy;
   v.innerHTML='<div class="title"><div class="eyebrow">Free session</div><div class="h1">Book your free session</div><div class="meta">A free '+ld.len+'-minute session with '+esc(CFG.coach)+' at TrainSmart Gym, Shadingfield. See where you’re at and how he works. No commitment.</div></div>'+
-    '<div class="card"><div class="eyebrow">Pick a time</div>'+(ld.days===null?'<div class="bar"><i class="load"></i></div>':ld.days.length?slotPicker(ld.days,ld.day,'l',ld.slot):'<div class="meta">No free sessions available right now. Message '+esc(CFG.coach)+' and he’ll find a time.</div>')+'</div>'+
+    '<div class="card"><div class="eyebrow">Pick a time</div>'+(ld.days===null?'<div class="bar"><i class="load"></i></div>':ld.days.length?slotPicker(ld.days,ld.day,'l',ld.slot):'<div class="meta">'+(ld.closed?'Online booking is closed at the moment. ':'No free sessions available right now. ')+'Message '+esc(CFG.coach)+' and he’ll find a time.</div>')+'</div>'+
     (ld.slot?'<div class="card"><div class="eyebrow">Your details</div>'+
       '<label class="field"><span class="fl">Your name</span><input id="ldname" class="csearch" type="text" autocomplete="name" value="'+esc(ld.name)+'"></label>'+
       '<label class="field"><span class="fl">Mobile number</span><input id="ldphone" class="csearch" type="tel" autocomplete="tel" value="'+esc(ld.phone)+'"></label>'+
