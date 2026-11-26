@@ -1827,12 +1827,12 @@ function pbSection(){
 
 /* ---------- coach mode ---------- */
 /* ---------- bookings (cluster booking) ---------- */
-/* Clients book, move or cancel 1-1 sessions on the Book tab. New leads book a
-   free session from ?book=free. Ben books anyone from the coach app. The engine
+/* Clients book, move or cancel 1-1 sessions on the Book tab.
+   Ben books anyone (new clients too) from the coach app; ?book=free now just points to the enquiry form. The engine
    only offers times inside Ben's hours that sit next to his other bookings. */
 var bk=null,bkErr='',bkLoading=false,bkDay=null,bkMove=null;
 var cBook=null,cBookErr='',cb=null;
-var LEAD=false,ld={days:null,day:null,slot:null,name:'',phone:'',err:'',done:null,busy:false,len:60};
+var LEAD=false;
 function parseLocal(s){var m=String(s||'').match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/);return m?new Date(+m[1],+m[2]-1,+m[3],+m[4],+m[5]):null;}
 function slotLabel(days,start){
   var d=(days||[]).filter(function(x){return x.date===String(start).slice(0,10);})[0];
@@ -2002,43 +2002,13 @@ function cbShow(id){
   });
 }
 
-/* public free-session page: ?book=free */
-function loadLead(){
-  ld.days=null;ld.err='';renderLead();
-  apiCall({action:'lead_book',op:'slots'},30000).then(function(j){
-    if(!j||!j.ok){ld.err=(j&&j.message)||'Couldn’t load times.';ld.days=[];}
-    else{ld.closed=!!j.closed;ld.days=j.ready?(j.days||[]):[];ld.len=j.len||60;if(!ld.day||!ld.days.some(function(d){return d.date===ld.day;})){ld.day=ld.days.length?ld.days[0].date:null;}}
-    renderLead();
-  },function(e){ld.err=(e&&e.message)||'Couldn’t connect.';ld.days=[];renderLead();});
-}
+/* Old ?book=free link: self-booking for new clients is switched off. Ben books
+   new clients himself, so this just points people to the enquiry form. */
+function loadLead(){renderLead();}
 function renderLead(){
   var v=$('#view-home');
-  if(ld.done){
-    v.innerHTML='<div class="title"><div class="eyebrow">You’re booked in</div><div class="h1">See you '+esc(ld.done.day)+'</div><div class="meta">Free session with '+esc(CFG.coach)+' at '+esc(ld.done.time)+', TrainSmart Gym, Shadingfield. '+esc(CFG.coach)+' will WhatsApp you to confirm. Need to change it? Just reply to his message.</div></div>';
-    return;
-  }
-  var canBook=ld.slot&&ld.name.trim().length>1&&String(ld.phone).replace(/[^\d]/g,'').length>=10&&!ld.busy;
-  v.innerHTML='<div class="title"><div class="eyebrow">Free session</div><div class="h1">Book your free session</div><div class="meta">A free '+ld.len+'-minute session with '+esc(CFG.coach)+' at TrainSmart Gym, Shadingfield. See where you’re at and how he works. No commitment.</div></div>'+
-    '<div class="card"><div class="eyebrow">Pick a time</div>'+(ld.days===null?'<div class="bar"><i class="load"></i></div>':ld.days.length?slotPicker(ld.days,ld.day,'l',ld.slot):'<div class="meta">'+(ld.closed?'Online booking is closed at the moment. ':'No free sessions available right now. ')+'Message '+esc(CFG.coach)+' and he’ll find a time.</div>')+'</div>'+
-    (ld.slot?'<div class="card"><div class="eyebrow">Your details</div>'+
-      '<label class="field"><span class="fl">Your name</span><input id="ldname" class="csearch" type="text" autocomplete="name" value="'+esc(ld.name)+'"></label>'+
-      '<label class="field"><span class="fl">Mobile number</span><input id="ldphone" class="csearch" type="tel" autocomplete="tel" value="'+esc(ld.phone)+'"></label>'+
-      '<input id="ldweb" class="hp" type="text" tabindex="-1" autocomplete="off" aria-hidden="true">'+
-      '<div class="err">'+esc(ld.err||'')+'</div>'+
-      '<button class="btn primary block" type="button" id="ldgo"'+(canBook?'':' disabled')+'>'+(ld.busy?'Booking…':'Book '+esc(slotLabel(ld.days,ld.slot)))+'</button></div>':
-      (ld.err?'<div class="err">'+esc(ld.err)+'</div>':''));
-  $$('[data-lday]',v).forEach(function(b){b.addEventListener('click',function(){ld.day=b.dataset.lday;ld.slot=null;renderLead();centreDay(v);});});
-  $$('[data-lslot]',v).forEach(function(b){b.addEventListener('click',function(){ld.slot=b.dataset.lslot;ld.err='';renderLead();centreDay(v);var n=$('#ldname');if(n&&!ld.name){n.focus();}});});
-  var chk=function(){var g=$('#ldgo');if(g){g.disabled=!(ld.slot&&ld.name.trim().length>1&&String(ld.phone).replace(/[^\d]/g,'').length>=10&&!ld.busy);}};
-  var nm=$('#ldname');if(nm){nm.addEventListener('input',function(){ld.name=nm.value;chk();});$('#ldphone').addEventListener('input',function(){ld.phone=this.value;chk();});}
-  var go=$('#ldgo');if(go){go.addEventListener('click',function(){
-    ld.busy=true;ld.err='';renderLead();
-    apiCall({action:'lead_book',op:'make',name:ld.name.trim(),phone:ld.phone.trim(),start:ld.slot,website:($('#ldweb')||{}).value||''},40000).then(function(j){
-      if(!j||!j.ok){throw Object.assign(new Error((j&&j.message)||'That didn’t book.'),{code:j&&j.error});}
-      ld.busy=false;ld.done=j.booking||{day:slotLabel(ld.days,ld.slot).split(' at ')[0],time:ld.slot.slice(11,16)};renderLead();
-    }).catch(function(e){ld.busy=false;ld.err=(e&&e.message)||'That didn’t book.';if(e&&e.code==='taken'){ld.slot=null;loadLead();}else{renderLead();}});
-  });}
-  centreDay(v);
+  v.innerHTML='<div class="title"><div class="eyebrow">Free session</div><div class="h1">Get in touch</div><div class="meta">Want a free session at TrainSmart Gym, Shadingfield? Fill in the quick form and '+esc(CFG.coach)+' will message you to find a time that works.</div></div>'+
+    '<div class="card"><a class="btn primary block" href="https://forms.gle/6QpvWD8eApiQLHT57">Open the quick form</a></div>';
 }
 
 /* One private link (?coach=KEY) lists every active client. Pick one to log
