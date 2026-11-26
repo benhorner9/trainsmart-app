@@ -296,6 +296,17 @@ th:not(:first-child),td:not(:first-child){text-align:right}
 .crow .st.new{background:rgba(243,193,58,.15);color:var(--plate)}
 .csearch{width:100%;padding:13px 14px;border-radius:12px;border:1px solid var(--line);background:var(--panel);color:var(--chalk);font:inherit;font-size:16px}
 .recent{display:flex;gap:8px;flex-wrap:wrap}
+.slots{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.slot{min-width:74px}
+.bkdays{margin-top:4px}
+.bkrow{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:12px 0;border-top:1px solid var(--line)}
+.bkrow .meta{display:block;font-size:12px;margin-top:3px}
+.bkrow .bklate{max-width:44%;text-align:right}
+.bkline{display:grid;grid-template-columns:56px 1fr auto;gap:8px;align-items:center;width:100%;text-align:left;padding:10px 0;border:0;border-top:1px solid var(--line);background:none;color:var(--chalk);font:inherit;cursor:pointer}
+.bkline .meta{font-size:12px}
+.bkday{margin-top:10px}
+.hp{position:absolute;left:-9999px;width:1px;height:1px;opacity:0}
+select.csearch{appearance:none;-webkit-appearance:none}
 /* personal bests + coach feedback */
 .pbs{gap:0}
 .pbrow{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--line)}
@@ -355,12 +366,14 @@ details.amts li::before{content:'';position:absolute;left:0;top:9px;width:5px;he
     <section class="view" id="view-meals" hidden></section>
     <section class="view" id="view-progress" hidden></section>
     <section class="view" id="view-group" hidden></section>
+    <section class="view" id="view-book" hidden></section>
   </main>
   <nav id="nav" aria-label="Main">
     <a href="#home" data-tab="home"><svg viewBox="0 0 24 24"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/></svg>Home</a>
     <a href="#log" data-tab="log"><svg viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13 7l4 4"/></svg>Log</a>
     <a href="#train" data-tab="train"><svg viewBox="0 0 24 24"><path d="M3 9v6M6 6v12M18 6v12M21 9v6M6 12h12"/></svg>Train</a>
     <a href="#group" data-tab="group"><svg viewBox="0 0 24 24"><circle cx="8" cy="8" r="3"/><circle cx="16" cy="8" r="3"/><path d="M2.5 20c.6-3.4 2.8-5.5 5.5-5.5s4.9 2.1 5.5 5.5M10.5 20c.6-3.4 2.8-5.5 5.5-5.5s4.9 2.1 5.5 5.5"/></svg>Group</a>
+    <a href="#book" data-tab="book"><svg viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15" rx="2"/><path d="M3.5 10h17M8 3v4M16 3v4M12 13.5v4M10 15.5h4"/></svg>Book</a>
     <a href="#meals" data-tab="meals"><svg viewBox="0 0 24 24"><path d="M7 3v8M4.5 3v5a2.5 2.5 0 0 0 5 0V3M7 11v10"/><path d="M17 21V3c-2.2 1.4-3.5 4-3.5 7.5H17"/></svg>Meals</a>
     <a href="#progress" data-tab="progress"><svg viewBox="0 0 24 24"><path d="M4 19V5"/><path d="M4 19h16"/><path d="M7 14l4-4 3 3 5-6"/></svg>Progress</a>
   </nav>
@@ -406,7 +419,7 @@ var CFG={brand:'TrainSmart Coaching',coach:'Ben',client:'Alex',cycles:8,perCycle
        &on=&off=         clears the test settings again
      The settings are remembered on that phone, even when opened from the home-screen icon.
      Sample-data mode always shows every tab. */
-  tabs:{train:true,meals:true,progress:true,log:false,checkin:false,group:false}};
+  tabs:{train:true,meals:true,progress:true,log:false,checkin:false,group:false,book:false}};
 var LIVE=false,BOOT='demo',BOOTERR='',BOOTNORETRY=false,TOKEN='';
 var COACH='',COACHMODE=false,coachList=null,coachErr='',coachQuery='',coachName='';
 var live={state:null,names:[],cur:null,key:''};
@@ -658,7 +671,7 @@ function getToken(){
   return t||CFG.previewToken||'';
 }
 /* Per-client test switches from the link (&on= / &off=), remembered per client on this device. */
-var TABKEYS=['log','train','meals','progress','checkin','group'],TESTTABS={},CLIENTTABS={};
+var TABKEYS=['log','train','meals','progress','checkin','group','book'],TESTTABS={},CLIENTTABS={};
 /* Roster tick-boxes arrive from the sheet as true/false, "TRUE"/"FALSE", "yes"/"no" or blank. Blank = use the default. */
 function readClientTabs(raw){
   var out={};if(!raw||typeof raw!=='object'){return out;}
@@ -686,7 +699,7 @@ function loadTestTabs(){
 }
 function tabOn(t){
   if(t==='home'||!LIVE){return true;}
-  if(COACHMODE){if(t==='group'){return !!CLIENTTABS.group;}return t==='checkin'?CFG.tabs.checkin!==false:true;}
+  if(COACHMODE){if(t==='book'){return false;}if(t==='group'){return !!CLIENTTABS.group;}return t==='checkin'?CFG.tabs.checkin!==false:true;}
   if(Object.prototype.hasOwnProperty.call(TESTTABS,t)){return !!TESTTABS[t];}
   if(Object.prototype.hasOwnProperty.call(CLIENTTABS,t)){return CLIENTTABS[t];}
   return CFG.tabs[t]!==false;
@@ -1812,6 +1825,213 @@ function pbSection(){
 }
 
 /* ---------- coach mode ---------- */
+/* ---------- bookings (cluster booking) ---------- */
+/* Clients book, move or cancel 1-1 sessions on the Book tab. New leads book a
+   free session from ?book=free. Ben books anyone from the coach app. The engine
+   only offers times inside Ben's hours that sit next to his other bookings. */
+var bk=null,bkErr='',bkLoading=false,bkDay=null,bkMove=null;
+var cBook=null,cBookErr='',cb=null;
+var LEAD=false,ld={days:null,day:null,slot:null,name:'',phone:'',err:'',done:null,busy:false,len:60};
+function parseLocal(s){var m=String(s||'').match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/);return m?new Date(+m[1],+m[2]-1,+m[3],+m[4],+m[5]):null;}
+function slotLabel(days,start){
+  var d=(days||[]).filter(function(x){return x.date===String(start).slice(0,10);})[0];
+  return (d?d.label:String(start).slice(0,10))+' at '+String(start).slice(11,16);
+}
+function slotPicker(days,sel,attr,picked){
+  if(!days||!days.length){return '<div class="meta">No times free at the moment.</div>';}
+  var d=days.filter(function(x){return x.date===sel;})[0]||days[0];
+  return '<div class="chips liftpick bkdays">'+days.map(function(x){return '<button type="button" class="chip'+(x.date===d.date?' on':'')+'" data-'+attr+'day="'+x.date+'">'+esc(x.label)+'</button>';}).join('')+'</div>'+
+    '<div class="slots">'+d.slots.map(function(s){return '<button type="button" class="chip slot'+(s.start===picked?' on':'')+'" data-'+attr+'slot="'+s.start+'">'+s.time+'</button>';}).join('')+'</div>';
+}
+function centreDay(v){var on=$('.bkdays .chip.on',v);if(on){var pk=on.parentNode;pk.scrollLeft=on.offsetLeft-pk.clientWidth/2+on.offsetWidth/2;}}
+function loadBook(){
+  bkLoading=true;bkErr='';
+  api('book',{},30000).then(function(j){
+    bk=j;bkLoading=false;
+    if(!bkDay||!(j.days||[]).some(function(d){return d.date===bkDay;})){bkDay=j.days&&j.days.length?j.days[0].date:null;}
+    if(location.hash==='#book'){renderBook();}
+  }).catch(function(e){bkLoading=false;bkErr=(e&&e.message)||'Couldn’t load bookings.';if(location.hash==='#book'){renderBook();}});
+}
+function renderBook(){
+  var v=$('#view-book');
+  if(!LIVE){v.innerHTML='<div class="card quiet"><div class="eyebrow">Book</div><div class="meta">Booking shows here when you open your own app link.</div></div>';return;}
+  if(!bk&&!bkErr){v.innerHTML='<div class="card quiet"><div class="eyebrow">Book</div><div class="h1">Loading</div><div class="bar"><i class="load"></i></div></div>';if(!bkLoading){loadBook();}return;}
+  if(bkErr){v.innerHTML='<div class="card quiet"><div class="eyebrow">Book</div><div class="meta">'+esc(bkErr)+'</div><button class="btn primary block" type="button" id="bkretry">Try again</button></div>';$('#bkretry').addEventListener('click',function(){bkErr='';bk=null;renderBook();});return;}
+  if(!bk.ready){v.innerHTML='<div class="card quiet"><div class="eyebrow">Book</div><div class="h1">Booking opens soon</div><div class="meta">Message '+esc(CFG.coach)+' to book in for now.</div></div>';return;}
+  var mine=bk.mine||[],cut=(bk.cancelH||0)*3600000,now=Date.now();
+  var mv=bkMove?mine.filter(function(b){return b.id===bkMove;})[0]:null;
+  var rows=mine.map(function(b){
+    var t=parseLocal(b.start),late=t&&t.getTime()-now<cut;
+    return '<div class="bkrow"><span><b>'+esc(b.day)+' · '+esc(b.time)+'</b><span class="meta">'+esc(b.type==='1-1'?'1-1 session':b.type)+' · until '+esc(b.end)+'</span></span>'+
+      (late?'<span class="meta bklate">Message '+esc(CFG.coach)+' to change</span>':'<span class="gnav"><button class="btn ghost" type="button" data-bmove="'+esc(b.id)+'">Move</button><button class="btn ghost" type="button" data-bcancel="'+esc(b.id)+'">Cancel</button></span>')+'</div>';
+  }).join('');
+  var lead=mv?'Moving '+esc(mv.day)+' at '+esc(mv.time)+'. Pick a new time.':
+    (bk.owed>0?'You have <b>'+bk.owed+'</b> session'+(bk.owed===1?'':'s')+' to book. ':'')+bk.len+'-minute 1-1 sessions with '+esc(CFG.coach)+'.';
+  v.innerHTML='<div class="title"><div class="eyebrow">Book</div><div class="h1">'+(mv?'Move your session':'Book a session')+'</div><div class="meta">'+lead+'</div></div>'+
+    (mv?'<button class="btn ghost block" type="button" id="bkkeep">Keep it where it is</button>':'')+
+    '<div class="card"><div class="eyebrow">Pick a time</div>'+slotPicker(bk.days,bkDay,'b')+'<div class="meta">Only times that work for '+esc(CFG.coach)+' are shown, so check back as more open up.</div></div>'+
+    (mv?'':'<div class="card"><div class="eyebrow">Your sessions</div>'+(rows||'<div class="meta">Nothing booked yet.</div>')+
+      (mine.length?'<div class="meta">You can move or cancel up to '+bk.cancelH+' hours before.</div>':'')+'</div>');
+  $$('[data-bday]',v).forEach(function(b){b.addEventListener('click',function(){bkDay=b.dataset.bday;renderBook();centreDay(v);});});
+  $$('[data-bslot]',v).forEach(function(b){b.addEventListener('click',function(){bookConfirm(b.dataset.bslot);});});
+  $$('[data-bmove]',v).forEach(function(b){b.addEventListener('click',function(){bkMove=b.dataset.bmove;renderBook();$('#main').scrollTop=0;});});
+  $$('[data-bcancel]',v).forEach(function(b){b.addEventListener('click',function(){bookCancelAsk(b.dataset.bcancel);});});
+  var k=$('#bkkeep');if(k){k.addEventListener('click',function(){bkMove=null;renderBook();});}
+  centreDay(v);
+}
+function bookConfirm(start){
+  var mv=bkMove,lbl=slotLabel(bk.days,start);
+  openSheet('<div class="h2">'+(mv?'Move to ':'Book ')+esc(lbl)+'?</div><div class="meta">'+bk.len+' minutes with '+esc(CFG.coach)+'. You can move or cancel up to '+bk.cancelH+' hours before.</div><div class="err" id="bkerr"></div>'+
+    '<button class="btn primary block" type="button" id="bkgo">'+(mv?'Move it':'Book it')+'</button><button class="btn ghost block" type="button" id="bkno">Back</button>');
+  $('#bkno').addEventListener('click',closeSheet);
+  $('#bkgo').addEventListener('click',function(){
+    var b=$('#bkgo');b.disabled=true;b.textContent=mv?'Moving…':'Booking…';
+    var req={start:start};if(mv){req.moveId=mv;}
+    api('book_make',req,40000).then(function(j){
+      closeSheet();bkMove=null;toast((mv?'Moved to ':'Booked: ')+j.booking.day+' at '+j.booking.time);loadBook();
+    }).catch(function(e){
+      $('#bkerr').textContent=(e&&e.message)||'That didn’t book.';b.disabled=false;b.textContent=mv?'Move it':'Book it';
+      if(e&&e.code==='taken'){b.hidden=true;loadBook();}
+    });
+  });
+}
+function bookCancelAsk(id){
+  var b=(bk.mine||[]).filter(function(x){return x.id===id;})[0];if(!b){return;}
+  openSheet('<div class="h2">Cancel '+esc(b.day)+' at '+esc(b.time)+'?</div><div class="meta">'+esc(CFG.coach)+' will get a message so he knows.</div><div class="err" id="bkerr"></div>'+
+    '<button class="btn primary block" type="button" id="bkcx">Cancel session</button><button class="btn ghost block" type="button" id="bkno">Keep it</button>');
+  $('#bkno').addEventListener('click',closeSheet);
+  $('#bkcx').addEventListener('click',function(){
+    var x=$('#bkcx');x.disabled=true;x.textContent='Cancelling…';
+    api('book_cancel',{id:id},30000).then(function(){closeSheet();toast('Session cancelled');loadBook();})
+      .catch(function(e){$('#bkerr').textContent=(e&&e.message)||'Couldn’t cancel.';x.disabled=false;x.textContent='Cancel session';});
+  });
+}
+
+/* coach: bookings card + book anyone in */
+function loadCoachBook(){
+  apiCall({action:'coach_book',coach:COACH,op:'list'},30000).then(function(j){
+    if(!j||!j.ok){cBookErr=(j&&j.message)||'Couldn’t load bookings.';cBook=null;}else{cBook=j;cBookErr='';}
+    if(BOOT==='coach'){renderCoach();}
+  },function(e){cBookErr=(e&&e.message)||'Couldn’t load bookings.';if(BOOT==='coach'){renderCoach();}});
+}
+function coachBookCard(){
+  if(cBookErr){return '<div class="card quiet"><div class="eyebrow">Bookings</div><div class="meta">'+esc(cBookErr)+'</div></div>';}
+  if(!cBook){return '<div class="card quiet"><div class="eyebrow">Bookings</div><div class="meta">Loading…</div></div>';}
+  var up=(cBook.upcoming||[]).slice(0,10),last='',list='';
+  up.forEach(function(b){
+    if(b.day!==last){list+='<div class="eyebrow bkday">'+esc(b.start.slice(0,10)===todayIso?'Today · '+b.day:b.day)+'</div>';last=b.day;}
+    list+='<button class="bkline" type="button" data-cbk="'+esc(b.id)+'"><b>'+esc(b.time)+'</b><span>'+esc(b.name)+'</span><span class="meta">'+esc(b.type)+'</span></button>';
+  });
+  return '<div class="card bkcard"><div class="eyebrow">Bookings</div>'+
+    (cBook.ready?'':'<div class="meta">Set your hours on the Hub’s Booking Settings tab to open booking.</div>')+
+    (list||'<div class="meta">Nothing booked yet.</div>')+
+    ((cBook.upcoming||[]).length>10?'<div class="meta">+ '+(cBook.upcoming.length-10)+' more on the Hub’s Bookings tab</div>':'')+
+    '<button class="btn primary block" type="button" id="cbnew">+ Book someone in</button></div>';
+}
+function wireCoachBook(v){
+  var n=$('#cbnew',v);if(n){n.addEventListener('click',function(){cb={who:'',name:'',phone:'',type:'1-1',anyTime:false,days:null,day:null,slot:null,err:'',busy:false};cbOpen();cbLoad();});}
+  $$('[data-cbk]',v).forEach(function(b){b.addEventListener('click',function(){cbShow(b.dataset.cbk);});});
+}
+function cbLoad(){
+  cb.days=null;cb.slot=null;cbOpen();
+  apiCall({action:'coach_book',coach:COACH,op:'slots',type:cb.type,anyTime:cb.anyTime},30000).then(function(j){
+    if(!cb){return;}
+    if(!j||!j.ok){cb.err=(j&&j.message)||'Couldn’t load times.';cb.days=[];}
+    else{cb.days=j.days||[];if(!cb.day||!cb.days.some(function(d){return d.date===cb.day;})){cb.day=cb.days.length?cb.days[0].date:null;}}
+    cbOpen();
+  },function(e){if(cb){cb.err=(e&&e.message)||'Couldn’t connect.';cb.days=[];cbOpen();}});
+}
+function cbOpen(){
+  var people=(coachList||[]).filter(function(c){return !c.test;}).concat((coachList||[]).filter(function(c){return c.test;}));
+  var opts='<option value="">Choose who…</option>'+people.map(function(c){return '<option value="'+esc(c.token)+'"'+(cb.who===c.token?' selected':'')+'>'+esc(c.name)+'</option>';}).join('')+
+    '<option value="new"'+(cb.who==='new'?' selected':'')+'>New person (not a client yet)</option>';
+  var types=['1-1','Free session','Consultation','Other'];
+  var canBook=cb.slot&&cb.who&&(cb.who!=='new'||cb.name.trim());
+  openSheet('<div class="h2">Book someone in</div>'+
+    '<label class="field"><span class="fl">Who</span><select id="cbwho" class="csearch">'+opts+'</select></label>'+
+    (cb.who==='new'?'<div class="fgrid"><label class="field"><span class="fl">Name</span><input id="cbname" class="csearch" type="text" autocomplete="off" value="'+esc(cb.name)+'"></label><label class="field"><span class="fl">Mobile</span><input id="cbphone" class="csearch" type="tel" autocomplete="off" value="'+esc(cb.phone)+'"></label></div>':'')+
+    '<div class="chips">'+types.map(function(t){return '<button type="button" class="chip'+(cb.type===t?' on':'')+'" data-cbtype="'+t+'">'+t+'</button>';}).join('')+'</div>'+
+    '<button type="button" class="chip'+(cb.anyTime?' on':'')+'" id="cbany" aria-pressed="'+cb.anyTime+'">'+(cb.anyTime?'✓ ':'')+'Any free time in my hours</button>'+
+    '<div class="meta">'+(cb.anyTime?'Showing every free time in your hours.':'Showing cluster times only (next to your other bookings).')+'</div>'+
+    (cb.days===null?'<div class="bar"><i class="load"></i></div>':slotPicker(cb.days,cb.day,'c',cb.slot))+
+    '<div class="err">'+esc(cb.err||'')+'</div>'+
+    '<button class="btn primary block" type="button" id="cbgo"'+(canBook&&!cb.busy?'':' disabled')+'>'+(cb.busy?'Booking…':cb.slot?'Book '+esc(slotLabel(cb.days,cb.slot)):'Pick a time')+'</button>'+
+    '<button class="btn ghost block" type="button" id="cbclose">Close</button>');
+  var s=$('#sheet');
+  $('#cbwho').addEventListener('change',function(){cb.who=this.value;cb.err='';cbOpen();});
+  var nm=$('#cbname');if(nm){nm.addEventListener('input',function(){cb.name=nm.value;$('#cbgo').disabled=!(cb.slot&&cb.name.trim());});$('#cbphone').addEventListener('input',function(){cb.phone=this.value;});}
+  $$('[data-cbtype]',s).forEach(function(b){b.addEventListener('click',function(){cb.type=b.dataset.cbtype;cbLoad();});});
+  $('#cbany').addEventListener('click',function(){cb.anyTime=!cb.anyTime;cbLoad();});
+  $$('[data-cday]',s).forEach(function(b){b.addEventListener('click',function(){cb.day=b.dataset.cday;cb.slot=null;cbOpen();centreDay(s);});});
+  $$('[data-cslot]',s).forEach(function(b){b.addEventListener('click',function(){cb.slot=b.dataset.cslot;cb.err='';cbOpen();centreDay(s);});});
+  $('#cbclose').addEventListener('click',function(){cb=null;closeSheet();});
+  $('#cbgo').addEventListener('click',function(){
+    if(!canBook){return;}
+    cb.busy=true;cb.err='';cbOpen();
+    var req={action:'coach_book',coach:COACH,op:'make',type:cb.type,anyTime:cb.anyTime,start:cb.slot};
+    if(cb.who==='new'){req.name=cb.name.trim();req.phone=cb.phone.trim();}else{req.token=cb.who;}
+    apiCall(req,40000).then(function(j){
+      if(!j||!j.ok){throw new Error((j&&j.message)||'That didn’t book.');}
+      cb=null;closeSheet();toast('Booked: '+j.booking.name+', '+j.booking.day+' at '+j.booking.time);loadCoachBook();
+    }).catch(function(e){if(!cb){return;}cb.busy=false;cb.err=(e&&e.message)||'That didn’t book.';cbLoad();});
+  });
+  centreDay(s);
+}
+function cbShow(id){
+  var b=(cBook.upcoming||[]).filter(function(x){return x.id===id;})[0];if(!b){return;}
+  var digits=String(b.phone||'').replace(/[^\d]/g,''),wa=digits?'https://wa.me/'+(digits.charAt(0)==='0'?'44'+digits.slice(1):digits):'';
+  openSheet('<div class="h2">'+esc(b.name)+'</div><div class="meta">'+esc(b.day)+' · '+esc(b.time)+'–'+esc(b.end)+' · '+esc(b.type)+'<br>Booked by '+esc(b.by)+(b.phone?' · '+esc(b.phone):'')+'</div><div class="err" id="cberr"></div>'+
+    (wa?'<a class="btn ghost block" href="'+wa+'" target="_blank" rel="noopener">WhatsApp '+esc(b.name.split(' ')[0])+'</a>':'')+
+    '<button class="btn primary block" type="button" id="cbcx">Cancel booking</button><button class="btn ghost block" type="button" id="cbno">Back</button>');
+  $('#cbno').addEventListener('click',closeSheet);
+  $('#cbcx').addEventListener('click',function(){
+    var x=$('#cbcx');x.disabled=true;x.textContent='Cancelling…';
+    apiCall({action:'coach_book',coach:COACH,op:'cancel',id:id},30000).then(function(j){
+      if(!j||!j.ok){throw new Error((j&&j.message)||'Couldn’t cancel.');}
+      closeSheet();toast('Booking cancelled');loadCoachBook();
+    }).catch(function(e){$('#cberr').textContent=(e&&e.message)||'Couldn’t cancel.';x.disabled=false;x.textContent='Cancel booking';});
+  });
+}
+
+/* public free-session page: ?book=free */
+function loadLead(){
+  ld.days=null;ld.err='';renderLead();
+  apiCall({action:'lead_book',op:'slots'},30000).then(function(j){
+    if(!j||!j.ok){ld.err=(j&&j.message)||'Couldn’t load times.';ld.days=[];}
+    else{ld.days=j.ready?(j.days||[]):[];ld.len=j.len||60;if(!ld.day||!ld.days.some(function(d){return d.date===ld.day;})){ld.day=ld.days.length?ld.days[0].date:null;}}
+    renderLead();
+  },function(e){ld.err=(e&&e.message)||'Couldn’t connect.';ld.days=[];renderLead();});
+}
+function renderLead(){
+  var v=$('#view-home');
+  if(ld.done){
+    v.innerHTML='<div class="title"><div class="eyebrow">You’re booked in</div><div class="h1">See you '+esc(ld.done.day)+'</div><div class="meta">Free session with '+esc(CFG.coach)+' at '+esc(ld.done.time)+', TrainSmart Gym, Shadingfield. '+esc(CFG.coach)+' will WhatsApp you to confirm. Need to change it? Just reply to his message.</div></div>';
+    return;
+  }
+  var canBook=ld.slot&&ld.name.trim().length>1&&String(ld.phone).replace(/[^\d]/g,'').length>=10&&!ld.busy;
+  v.innerHTML='<div class="title"><div class="eyebrow">Free session</div><div class="h1">Book your free session</div><div class="meta">A free '+ld.len+'-minute session with '+esc(CFG.coach)+' at TrainSmart Gym, Shadingfield. See where you’re at and how he works. No commitment.</div></div>'+
+    '<div class="card"><div class="eyebrow">Pick a time</div>'+(ld.days===null?'<div class="bar"><i class="load"></i></div>':ld.days.length?slotPicker(ld.days,ld.day,'l',ld.slot):'<div class="meta">No free sessions available right now. Message '+esc(CFG.coach)+' and he’ll find a time.</div>')+'</div>'+
+    (ld.slot?'<div class="card"><div class="eyebrow">Your details</div>'+
+      '<label class="field"><span class="fl">Your name</span><input id="ldname" class="csearch" type="text" autocomplete="name" value="'+esc(ld.name)+'"></label>'+
+      '<label class="field"><span class="fl">Mobile number</span><input id="ldphone" class="csearch" type="tel" autocomplete="tel" value="'+esc(ld.phone)+'"></label>'+
+      '<input id="ldweb" class="hp" type="text" tabindex="-1" autocomplete="off" aria-hidden="true">'+
+      '<div class="err">'+esc(ld.err||'')+'</div>'+
+      '<button class="btn primary block" type="button" id="ldgo"'+(canBook?'':' disabled')+'>'+(ld.busy?'Booking…':'Book '+esc(slotLabel(ld.days,ld.slot)))+'</button></div>':
+      (ld.err?'<div class="err">'+esc(ld.err)+'</div>':''));
+  $$('[data-lday]',v).forEach(function(b){b.addEventListener('click',function(){ld.day=b.dataset.lday;ld.slot=null;renderLead();centreDay(v);});});
+  $$('[data-lslot]',v).forEach(function(b){b.addEventListener('click',function(){ld.slot=b.dataset.lslot;ld.err='';renderLead();centreDay(v);var n=$('#ldname');if(n&&!ld.name){n.focus();}});});
+  var chk=function(){var g=$('#ldgo');if(g){g.disabled=!(ld.slot&&ld.name.trim().length>1&&String(ld.phone).replace(/[^\d]/g,'').length>=10&&!ld.busy);}};
+  var nm=$('#ldname');if(nm){nm.addEventListener('input',function(){ld.name=nm.value;chk();});$('#ldphone').addEventListener('input',function(){ld.phone=this.value;chk();});}
+  var go=$('#ldgo');if(go){go.addEventListener('click',function(){
+    ld.busy=true;ld.err='';renderLead();
+    apiCall({action:'lead_book',op:'make',name:ld.name.trim(),phone:ld.phone.trim(),start:ld.slot,website:($('#ldweb')||{}).value||''},40000).then(function(j){
+      if(!j||!j.ok){throw Object.assign(new Error((j&&j.message)||'That didn’t book.'),{code:j&&j.error});}
+      ld.busy=false;ld.done=j.booking||{day:slotLabel(ld.days,ld.slot).split(' at ')[0],time:ld.slot.slice(11,16)};renderLead();
+    }).catch(function(e){ld.busy=false;ld.err=(e&&e.message)||'That didn’t book.';if(e&&e.code==='taken'){ld.slot=null;loadLead();}else{renderLead();}});
+  });}
+  centreDay(v);
+}
+
 /* One private link (?coach=KEY) lists every active client. Pick one to log
    their session, check their log or look at their bests. */
 function getCoachKey(){
@@ -1834,7 +2054,7 @@ function stClass(t){
 }
 function shortStatus(t){return String(t||'').replace(/:.*$/,'');}
 function openCoach(){
-  COACHMODE=true;BOOT='coach';LIVE=false;TOKEN='';coachName='';
+  COACHMODE=true;BOOT='coach';LIVE=false;TOKEN='';coachName='';cBook=null;cBookErr='';
   if(location.hash){history.replaceState(null,'',location.pathname+location.search);}
   route();
   apiCall({action:'coach_clients',coach:COACH},25000).then(function(j){
@@ -1860,7 +2080,8 @@ function renderCoach(){
   var real=list.filter(function(c){return !c.test;}),tests=list.filter(function(c){return c.test;});
   var rec=q?[]:coachRecent().filter(function(r){return coachList.some(function(c){return c.token===r.token;});}).slice(0,4);
   if(!coachGroup&&!coachGroupErr){loadCoachGroup();}
-  v.innerHTML='<div class="title"><div class="eyebrow">Coach</div><div class="h1">Your clients</div></div>'+(q?'':coachGroupCard())+
+  if(!cBook&&!cBookErr){loadCoachBook();}
+  v.innerHTML='<div class="title"><div class="eyebrow">Coach</div><div class="h1">Your clients</div></div>'+(q?'':coachGroupCard()+coachBookCard())+
     '<input class="csearch" id="csearch" type="search" placeholder="Find a client" autocomplete="off" value="'+esc(coachQuery)+'">'+
     (rec.length?'<div class="eyebrow">Recent</div><div class="recent">'+rec.map(function(r){return '<button class="chip" type="button" data-tok="'+esc(r.token)+'">'+esc(r.name)+'</button>';}).join('')+'</div>':'')+
     '<div class="eyebrow">'+real.length+' active client'+(real.length===1?'':'s')+'</div><div class="clist">'+(real.map(row).join('')||'<div class="meta">No clients match.</div>')+'</div>'+
@@ -1870,7 +2091,7 @@ function renderCoach(){
   $$('[data-tok]',v).forEach(function(b){b.addEventListener('click',function(){
     var c=coachList.filter(function(x){return x.token===b.dataset.tok;})[0];if(c){pickClient(c);}
   });});
-  wireCoachGroup(v);
+  wireCoachGroup(v);wireCoachBook(v);
 }
 function pickClient(c,hash){
   var rec=coachRecent().filter(function(r){return r.token!==c.token;});
@@ -1881,15 +2102,20 @@ function pickClient(c,hash){
   state.weights={};state.logs={};state.feedback={};state.pbs=null;state.trends=null;state.cardio=[];state.history=[];liftSel='';cardioSel='';
   train.inputs={};drafts={};logDate=todayIso;logSaved=null;
   live.state=null;live.names=[];live.cur=null;live.key='';
-  TESTTABS={};CLIENTTABS={};pbAll=false;grp=null;grpErr='';grpLoading=false;grpWant=null;grpIn={};grpNote='';
+  TESTTABS={};CLIENTTABS={};pbAll=false;bk=null;bkErr='';bkDay=null;bkMove=null;grp=null;grpErr='';grpLoading=false;grpWant=null;grpIn={};grpNote='';
   location.hash=hash||'#train';
   startLive();
 }
 
 /* ---------- routing ---------- */
-var VIEWS=['home','log','train','group','meals','checkin','progress'];
-var RENDER={group:renderGroup,home:renderHome,log:renderLog,train:renderTrain,meals:renderMeals,checkin:renderCheckin,progress:function(){if(LIVE){renderProgressLive();}else{renderProgress();}}};
+var VIEWS=['home','log','train','group','book','meals','checkin','progress'];
+var RENDER={book:renderBook,group:renderGroup,home:renderHome,log:renderLog,train:renderTrain,meals:renderMeals,checkin:renderCheckin,progress:function(){if(LIVE){renderProgressLive();}else{renderProgress();}}};
 function route(){
+  if(BOOT==='lead'){
+    closeSheet();setPill();$('#nav').hidden=true;
+    VIEWS.forEach(function(n){$('#view-'+n).hidden=n!=='home';});
+    renderLead();return;
+  }
   if(BOOT==='coach'){
     closeSheet();setPill();$('#nav').hidden=true;
     VIEWS.forEach(function(n){$('#view-'+n).hidden=n!=='home';});
@@ -1914,12 +2140,15 @@ document.addEventListener('click',function(ev){
   if(g){location.hash=g.dataset.go;}
 });
 window.addEventListener('hashchange',route);
-COACH=CFG.api?getCoachKey():'';
+try{LEAD=new URLSearchParams(location.search).get('book')==='free';}catch(e){LEAD=false;}
+COACH=CFG.api&&!LEAD?getCoachKey():'';
 $('#coachswitch').addEventListener('click',function(){coachQuery='';openCoach();});
 $('#coachcardio').addEventListener('click',function(){var cs=finished()?null:curSession();cardioSheet(cs&&!isHy(cs)?plannedCardio(cs):{});});
-if(COACH){openCoach();}
+if(LEAD){TOKEN='';}
+else if(COACH){openCoach();}
 else{TOKEN=getToken();loadTestTabs();}
-if(COACH){/* coach mode */}
+if(LEAD&&CFG.api){BOOT='lead';route();loadLead();}
+else if(COACH){/* coach mode */}
 else if(CFG.api&&TOKEN){startLive();}
 else if(CFG.api){BOOT='error';BOOTNORETRY=true;BOOTERR='This link isn’t complete. Open the full link '+CFG.coach+' sent you.';route();}
 else{route();}
