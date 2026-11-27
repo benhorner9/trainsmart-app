@@ -10,7 +10,8 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="TrainSmart">
-<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="icon" type="image/png" sizes="64x64" href="favicon.png">
+<link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <title>TrainSmart Coaching</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -153,6 +154,8 @@ nav a.on{color:var(--plate)}
 .scale button.on{background:var(--plate);border-color:var(--plate);color:var(--plate-ink)}
 .scale-ends{display:flex;justify-content:space-between;font-size:11px;color:var(--mute)}
 .toggle{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.card.install .row{align-items:flex-start}
+.card.install .x{background:none;border:0;color:var(--mute);font-size:26px;line-height:1;padding:0 2px;margin:-4px -4px 0 8px;cursor:pointer}
 .banner{display:flex;gap:10px;align-items:flex-start;padding:12px 14px;border-radius:12px;border:1px solid var(--line);background:var(--panel);font-size:14px}
 .banner.ok{border-color:rgba(93,211,158,.5)}
 .banner.ok b{color:var(--good)}
@@ -669,6 +672,7 @@ function getToken(){
   try{t=new URLSearchParams(location.search).get('t')||'';}catch(e){}
   if(t){try{localStorage.setItem('ts_token',t);}catch(e){}return t;}
   try{t=localStorage.getItem('ts_token')||'';}catch(e){}
+  if(t){keepInUrl('t',t);}
   return t||CFG.previewToken||'';
 }
 /* Per-client test switches from the link (&on= / &off=), remembered per client on this device. */
@@ -901,8 +905,30 @@ function renderHome(){
       '<button class="btn ghost block" type="button" data-go="checkin">Open check-in</button></div>';
   v.innerHTML=
     '<div class="title"><div class="eyebrow">'+fmtLong(today)+'</div><div class="h1" style="font-size:36px">Good '+greet.toLowerCase()+', '+esc(CFG.client)+'</div></div>'+
-    nextCard+weekBlock+targets+(tabOn('log')?logCard:'')+(tabOn('checkin')?ci:'');
+    nextCard+installCard()+weekBlock+targets+(tabOn('log')?logCard:'')+(tabOn('checkin')?ci:'');
+  wireInstall(v);
 }
+
+/* ---------- add to home screen ---------- */
+var INSTALLEVT=null;
+function isStandalone(){try{return window.navigator.standalone===true||window.matchMedia('(display-mode: standalone)').matches;}catch(e){return false;}}
+function installPlatform(){var u=navigator.userAgent||'';if(/iphone|ipad|ipod/i.test(u)||(/macintosh/i.test(u)&&navigator.maxTouchPoints>1)){return 'ios';}return /android/i.test(u)?'android':'';}
+function installCard(){
+  if(!LIVE||COACHMODE||isStandalone()){return '';}
+  try{if(localStorage.getItem('ts_install_hide')){return '';}}catch(e){}
+  var p=installPlatform();if(!p){return '';}
+  var how=INSTALLEVT?'':p==='ios'?'In Safari, tap <b>Share</b> then <b>Add to Home Screen</b>.':'In Chrome, tap <b>⋮</b> then <b>Add to Home screen</b>.';
+  return '<div class="card install"><div class="row"><div class="h2">Add to your home screen</div><button class="x" type="button" id="insthide" aria-label="Hide">×</button></div>'+
+    (how?'<div class="meta">'+how+'</div>':'<button class="btn primary block" type="button" id="instgo">Add to home screen</button>')+'</div>';
+}
+function wireInstall(v){
+  var h=$('#insthide',v);if(h){h.addEventListener('click',function(){try{localStorage.setItem('ts_install_hide','1');}catch(e){}renderHome();});}
+  var g=$('#instgo',v);if(g){g.addEventListener('click',function(){var ev=INSTALLEVT;INSTALLEVT=null;if(!ev){return;}ev.prompt();Promise.resolve(ev.userChoice).then(function(){renderHome();},function(){renderHome();});});}
+}
+function homeShowing(){return LIVE&&!COACHMODE&&(location.hash===''||location.hash==='#home');}
+window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();INSTALLEVT=e;if(homeShowing()){renderHome();}});
+window.addEventListener('appinstalled',function(){INSTALLEVT=null;try{localStorage.setItem('ts_install_hide','1');}catch(e){}if(homeShowing()){renderHome();}});
+if('serviceWorker' in navigator&&window.isSecureContext&&location.protocol!=='file:'){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}
 
 /* ---------- LOG ---------- */
 var NUM_FIELDS=[
@@ -2019,8 +2045,12 @@ function getCoachKey(){
   if(q&&q.get('coach')){k=q.get('coach');try{localStorage.setItem('ts_coach',k);}catch(e){}return k;}
   if(q&&q.get('t')){return '';}
   try{k=localStorage.getItem('ts_coach')||'';}catch(e){}
+  if(k){keepInUrl('coach',k);}
   return k;
 }
+/* Put the key back in the address so 'Add to Home Screen' saves the full link
+   (a home-screen app on iPhone doesn't share storage with Safari). */
+function keepInUrl(name,val){try{history.replaceState(null,'',location.pathname+'?'+name+'='+encodeURIComponent(val)+location.hash);}catch(e){}}
 function coachRecent(){try{return JSON.parse(localStorage.getItem('ts_coach_recent')||'[]');}catch(e){return [];}}
 function stClass(t){
   if(/^Gone quiet/i.test(t)){return 'bad';}
