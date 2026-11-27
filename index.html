@@ -733,7 +733,7 @@ function api(action,extra,ms){
     return j;
   });
 }
-function noteFor(exs){var n=(exs||[]).length,p=(exs||[]).filter(function(e){return /^PROGRESS/.test(String(e.outcome||''));}).length;return p+' of '+n+' progressed';}
+function noteFor(exs){var n=(exs||[]).length,p=(exs||[]).filter(function(e){return /^PROGRESS/.test(String(e.outcome||''));}).length;return n?p+' of '+n+' progressed':'';}
 function liveEx(e){
   return {order:e.order,name:nice(e.name),rawName:e.name,sets:e.sets,lo:e.repLow,hi:e.repHigh,inc:e.increment,rest:e.rest||'',tempo:'',note:e.notes||'',
     live:true,lastText:e.lastText||'',last:{reps:[],load:null,target:[]},
@@ -821,7 +821,7 @@ function openLiveSummary(){
       return '<div class="sum"><b>'+esc(nice(r.name))+'</b><span>Done '+fmtPlan(d.reps,d.load)+'</span><span class="nx">Next '+fmtPlan((r.nextReps||[]).slice(0,r.nextSets),r.nextLoad)+'</span><span class="why">'+esc(r.feedback||outcomeText(r.outcome))+'</span></div>';
     }).join('');
     var nn=nextName();
-    openSheet('<div class="h2">Finish '+esc(s.name)+'?</div><div class="meta">Here’s what you did and what’s next. '+(lastOfBlock()?'This finishes your block.':(nn?'Up next: '+esc(nn)+'.':''))+'</div>'+rows+
+    openSheet('<div class="h2">Finish '+esc(s.name)+'?</div><div class="meta">'+(lastOfBlock()?'This finishes your block.':(nn?'Up next: '+esc(nn)+'.':''))+'</div>'+rows+
       '<button class="btn primary block" type="button" id="confirmdone">Save session</button><button class="btn ghost block" type="button" id="backto">Back</button>');
     $('#backto').addEventListener('click',closeSheet);
     $('#confirmdone').addEventListener('click',function(ev){commitLive(ev.currentTarget);});
@@ -879,7 +879,7 @@ function renderHome(){
   }
   var weekBlock='<div class="card"><div class="row"><div class="eyebrow">This week</div><span class="meta"><b style="color:var(--chalk)">'+Math.min(done,CFG.plannedPerWeek)+' of '+CFG.plannedPerWeek+'</b> sessions</span></div>'+
     '<div class="week">'+days+'</div>'+
-    '<div class="hint">Train on any days. A missed session carries over.</div></div>';
+    '</div>';
   var targets='';
   if(tg){
     targets='<div class="stack"><div class="eyebrow">Daily targets</div><div class="macros4">'+
@@ -891,8 +891,8 @@ function renderHome(){
       '</div>';
   }
   var logCard=todayLog
-    ? '<div class="banner ok"><div><b>Today is logged.</b> You can still edit it on the Log tab.</div></div>'
-    : '<div class="card"><div class="row"><div><div class="h2">Log today</div><div class="meta" style="margin-top:6px">Weight, food, steps, sleep. As much or as little as you like.</div></div></div><button class="btn primary block" type="button" data-go="log">Log today</button></div>';
+    ? '<div class="banner ok"><div><b>Today is logged.</b></div></div>'
+    : '<div class="card"><div class="row"><div><div class="h2">Log today</div><div class="meta" style="margin-top:6px">Weight, food, steps, sleep.</div></div></div><button class="btn primary block" type="button" data-go="log">Log today</button></div>';
   var due=T===CFG.checkInDay;
   var ci=state.checkin.sent
     ? '<div class="banner ok"><div><b>Check-in sent.</b> '+esc(CFG.coach)+' will review it.</div></div>'
@@ -943,11 +943,11 @@ function renderLog(){
   v.innerHTML=
     '<div class="title"><div class="eyebrow">Daily log</div><div class="h1">'+(logDate===todayIso?'Today':logDate===yIso?'Yesterday':fmtDate(fromIso(logDate)))+'</div></div>'+
     (LIVE&&!LOGLIVE?previewBanner():'')+saved+fb+
-    '<p class="hint">Log as much or as little as you like. Every box is optional.</p>'+
+    '<p class="hint">Every box is optional.</p>'+
     '<div class="chips" id="datechips"><button class="chip'+(logDate===todayIso?' on':'')+'" type="button" data-date="'+todayIso+'">Today</button><button class="chip'+(logDate===yIso?' on':'')+'" type="button" data-date="'+yIso+'">Yesterday</button>'+
     '<label class="chip datechip'+(custom?' on':'')+'">'+ICON.cal+(custom?fmtDate(fromIso(logDate)):'Other day')+'<input id="pickdate" type="date" min="'+iso(LIVE?addDays(today,-14):startMonday)+'" max="'+todayIso+'" value="'+(custom?logDate:'')+'" aria-label="Pick another date"></label></div>'+
     '<div class="card"><div class="eyebrow">Body and food</div><div class="fgrid">'+fields.w+fields.steps+fields.p+fields.f+fields.c+fields.kcal+'<div class="field wide"><span class="hint" id="macrohint">'+macroHint(e)+'</span></div>'+fields.fluid+'</div></div>'+
-    '<div class="card"><div class="eyebrow">Training</div><div class="row"><span class="fl">Session</span><span class="pill'+(sess?' good':'')+'">'+(sess?esc(sess)+' done':'None')+'</span></div><div class="fgrid">'+fields.cardio+'</div>'+cardioRows(cardioList().filter(function(c){return c.date===logDate;}),true)+'<button class="btn ghost block" type="button" id="logcardio">+ Add cardio: type, distance and time</button></div>'+
+    '<div class="card"><div class="eyebrow">Training</div><div class="row"><span class="fl">Session</span><span class="pill'+(sess?' good':'')+'">'+(sess?esc(sess)+' done':'None')+'</span></div><div class="fgrid">'+fields.cardio+'</div>'+cardioRows(cardioList().filter(function(c){return c.date===logDate;}),true)+'<button class="btn ghost block" type="button" id="logcardio">+ Add cardio</button></div>'+
     '<div class="card"><div class="eyebrow">How you feel</div>'+scales+'<div class="fgrid">'+fields.sleep+'</div></div>'+
     '<div class="card"><div class="eyebrow">Off plan today?</div><div class="toggle"><button type="button" class="chip'+(e.off===false?' on':'')+'" data-off="0">No</button><button type="button" class="chip'+(e.off===true?' on':'')+'" data-off="1">Yes</button></div>'+
     '<label class="field"><span class="fl">Notes</span><textarea id="f-notes" data-k="notes" placeholder="Meal out, bad night, sore knee… anything worth knowing.">'+esc(e.notes||'')+'</textarea></label></div>'+
@@ -1080,8 +1080,8 @@ function renderTrain(){
   v.innerHTML=
     '<div class="title"><div class="eyebrow">Session '+sessNo()+' of '+CFG.perCycle+' · Cycle '+cycleNo()+' of '+CFG.cycles+'</div><div class="h1">'+esc(s.name)+'</div><div class="facts meta">'+sessFacts(s)+'</div></div>'+
     weekChips()+
-    '<button class="btn ghost block addcardio" type="button" id="addcardio">+ Add cardio (run, row, ski, bike)</button>'+
-    '<p class="hint">Enter the reps you got for each set. Leave kg blank for bodyweight.</p>'+
+    '<button class="btn ghost block addcardio" type="button" id="addcardio">+ Add cardio</button>'+
+    '<p class="hint">Leave kg blank for bodyweight.</p>'+
     s.ex.map(exCard).join('')+
     '<div class="dock"><div class="row"><span id="dockcount"></span></div><button class="btn primary block" type="button" id="complete" disabled>Finish session</button></div>';
   wireTrain();
@@ -1143,7 +1143,7 @@ function openSummary(){
     return '<div class="sum"><b>'+esc(r.ex.name)+'</b><span>Done '+fmtPlan(r.reps,r.load)+'</span><span class="nx">Next '+fmtPlan(r.next.target,r.next.load)+'</span><span class="why">'+esc(r.next.why)+'</span></div>';
   }).join('');
   var nxt=SESSIONS[(completed+1)%CFG.perCycle].name;
-  openSheet('<div class="h2">Finish '+esc(s.name)+'?</div><div class="meta">Here’s what you did and what’s next. '+(completed+1>=TOTAL?'This finishes your block.':'Up next: '+esc(nxt)+'.')+'</div>'+rows+
+  openSheet('<div class="h2">Finish '+esc(s.name)+'?</div><div class="meta">'+(completed+1>=TOTAL?'This finishes your block.':'Up next: '+esc(nxt)+'.')+'</div>'+rows+
     '<button class="btn primary block" type="button" id="confirmdone">Save session</button><button class="btn ghost block" type="button" id="backto">Back</button>');
   $('#backto').addEventListener('click',closeSheet);
   $('#confirmdone').addEventListener('click',function(){
@@ -1304,14 +1304,14 @@ function renderMeals(){
     return;
   }
   var t=n.targets||{};if(mealSlot>=groups.length){mealSlot=0;}
-  var st=n.style||{},styleLine=[st.diet,st.mealStyle,st.cooking?'Cooking '+st.cooking:''].filter(Boolean).map(esc).join(' · ');
+  var st=n.style||{},styleLine=[st.diet,/^no pref/i.test(st.mealStyle||'')?'':st.mealStyle,st.cooking?'Cooking '+st.cooking:''].filter(Boolean).map(esc).join(' · ');
   var tiles=[['Calories',fv(t.calories),'kcal'],['Protein',fv(t.protein),'g'],['Carbs',fv(t.carbs),'g'],['Fats',fv(t.fats),'g']].map(function(x){return '<div><span class="eyebrow">'+x[0]+'</span><span class="num">'+x[1]+'</span><span class="u">'+x[2]+'</span></div>';}).join('');
   var chips=groups.map(function(g,i){return '<button class="chip'+(i===mealSlot?' on':'')+'" type="button" data-slot="'+i+'">'+esc(g.type)+'<span class="ct">'+g.meals.length+'</span></button>';}).join('');
   var cur=groups[mealSlot],bestN=cur.meals.filter(function(m){return m.best;}).length;
   v.innerHTML=head+
     '<div class="stack"><div class="row"><div class="eyebrow">Daily targets</div>'+(t.mealsPerDay?'<span class="meta">'+t.mealsPerDay+' meals a day</span>':'')+'</div><div class="macros4">'+tiles+'</div>'+(styleLine?'<div class="hint">'+styleLine+'</div>':'')+'</div>'+
     '<div class="chips" id="slotchips">'+chips+'</div>'+
-    '<p class="hint">Pick any '+esc(cur.type.toLowerCase())+' and a portion size.'+(bestN?' Best fits for your targets are at the top.':'')+' Repeating meals is fine.</p>'+
+    (bestN?'<p class="hint">Best fits for your targets are at the top.</p>':'')+
     '<div class="stack" id="mealList">'+cur.meals.map(function(m,mi){return mealCard(mealSlot,mi,m,false);}).join('')+'</div>';
   $$('#slotchips [data-slot]',v).forEach(function(b){b.addEventListener('click',function(){mealSlot=Number(b.dataset.slot);renderMeals();window.scrollTo(0,0);});});
   $('#mealList',v).addEventListener('click',function(e){
@@ -1409,7 +1409,7 @@ function renderProgress(){
     '<div class="tiles"><div class="tile"><div class="eyebrow">Start</div><div class="num">'+first.avg.toFixed(1)+'<small>kg</small></div></div>'+
     '<div class="tile"><div class="eyebrow">Now</div><div class="num">'+last.avg.toFixed(1)+'<small>kg</small></div></div>'+
     '<div class="tile"><div class="eyebrow">Change</div><div class="num '+(change>0?'up':'down')+'">'+signed(change)+'<small>kg</small></div></div></div>'+
-    '<div class="card"><div class="eyebrow">Bodyweight</div>'+chartSVG()+'<div class="hint">Dots are daily weigh-ins. The line is your weekly average, which is the number to watch.</div></div>'+
+    '<div class="card"><div class="eyebrow">Bodyweight</div>'+chartSVG()+'<div class="hint">Dots are weigh-ins. The line is your weekly average.</div></div>'+
     hyCard+'<div class="card"><div class="eyebrow">Week by week</div><table><thead><tr><th>Week</th><th>Avg kg</th><th>Change</th><th>Logged</th></tr></thead><tbody>'+rows+'</tbody></table></div>'+
     '<div class="card"><div class="eyebrow">Recent sessions</div><table><thead><tr><th>Session</th><th>Date</th><th>Result</th></tr></thead><tbody>'+hist+'</tbody></table></div>';
 }
@@ -1422,7 +1422,7 @@ function renderProgressLive(){
       var nx=(e.nextReps||[]).slice(0,e.nextSets);
       return '<div class="sum"><b>'+esc(nice(e.name))+'</b><span>Done '+fmtPlan(e.actualReps||[],e.actualLoad)+'</span><span class="nx">Next '+fmtPlan(nx,e.nextLoad)+'</span><span class="why">'+esc(outcomeText(e.outcome))+'</span></div>';
     }).join('');
-    return '<div class="card"><div class="eyebrow">'+fmtDate(fromIso(h.date))+' · Cycle '+h.cycle+', session '+h.session+'</div><div class="row"><div class="h2">'+esc(h.name)+'</div><span class="pill'+(/^0 of/.test(h.note)?'':' good')+'">'+esc(h.note)+'</span></div>'+rows+'</div>';
+    return '<div class="card"><div class="eyebrow">'+fmtDate(fromIso(h.date))+' · Cycle '+h.cycle+', session '+h.session+'</div><div class="row"><div class="h2">'+esc(h.name)+'</div>'+(h.note?'<span class="pill'+(/^0 of/.test(h.note)?'':' good')+'">'+esc(h.note)+'</span>':'')+'</div>'+rows+'</div>';
   }).join('');
   v.innerHTML=
     '<div class="title"><div class="eyebrow">Your block</div><div class="h1">Progress</div></div>'+
@@ -1430,7 +1430,7 @@ function renderProgressLive(){
     '<div class="tile"><div class="eyebrow">Cycle</div><div class="num">'+Math.min(cycleNo(),CFG.cycles)+'<small>of '+CFG.cycles+'</small></div></div>'+
     '<div class="tile"><div class="eyebrow">This week</div><div class="num">'+Math.min(sessionsThisWeek(),CFG.plannedPerWeek)+'<small>of '+CFG.plannedPerWeek+'</small></div></div></div>'+
     trendsSection()+pbSection()+
-    (cards?'<div class="eyebrow" style="margin-top:4px">Recent sessions</div>'+cards:'<div class="card"><div class="eyebrow">Recent sessions</div><div class="meta">Nothing yet. Finish your first session and your results will show here.</div></div>');
+    (cards?'<div class="eyebrow" style="margin-top:4px">Recent sessions</div>'+cards:'<div class="card"><div class="eyebrow">Recent sessions</div><div class="meta">Finish your first session to see it here.</div></div>');
   var more=$('#pbmore',v);if(more){more.addEventListener('click',function(){pbAll=true;renderProgressLive();});}
   $$('[data-cpick]',v).forEach(function(b){b.addEventListener('click',function(){cardioSel=b.dataset.cpick;var y=window.scrollY;renderProgressLive();window.scrollTo(0,y);});});
   $$('[data-lift]',v).forEach(function(b){b.addEventListener('click',function(){liftSel=b.dataset.lift;var y=window.scrollY;renderProgressLive();window.scrollTo(0,y);var on=$('.liftpick .chip.on');if(on){var pk=on.parentNode;pk.scrollLeft=on.offsetLeft-pk.clientWidth/2+on.offsetWidth/2;}});});
@@ -1705,7 +1705,7 @@ function cardioCard(){
     '<div class="chips liftpick" role="group" aria-label="Pick an effort">'+chips+'</div>'+
     '<div class="row"><span class="num">'+fmtDur(best.secs)+'<small>best</small></span><span class="meta '+(diff<0?'gain':'')+'">'+esc(chg)+'</span></div>'+
     (g.length>=2?svgLine(g.map(function(e){return {t:fromIso(e.date).getTime(),y:e.secs};}),{fmtY:fmtDur,minPad:5,label:'Times for this effort'}):'')+
-    '<div class="hint">Best '+fmtDur(best.secs)+' ('+esc(cpace(best.type,best.dist,best.secs))+'), '+fmtDate(fromIso(best.date))+'. Last time '+fmtDur(last.secs)+'. '+(g.length>=2?'Lower is faster.':'Log it again to see your trend.')+'</div></div>';
+    '<div class="hint">Best '+fmtDur(best.secs)+' ('+esc(cpace(best.type,best.dist,best.secs))+'), '+fmtDate(fromIso(best.date))+'. Last time '+fmtDur(last.secs)+'. '+(g.length>=2?'':'Log it again to see your trend.')+'</div></div>';
 }
 /* ---------- progress charts (live) ---------- */
 /* Bodyweight and steps come from the client's own daily log; lifts come
@@ -1755,7 +1755,7 @@ function weightCard(){
   if(st.w&&st.date&&(!pts.length||st.date<pts[0].d)){pts.unshift({t:fromIso(st.date).getTime(),y:Number(st.w),d:st.date,start:true});}
   if(pts.length<2){
     return '<div class="card"><div class="eyebrow">Bodyweight</div>'+(st.w?'<div class="row"><span class="num">'+kg(st.w)+'<small>kg at the start</small></span></div>':'')+
-      '<div class="hint">Log your bodyweight on the Log tab and your trend will build up here. A few weigh-ins a week is plenty.</div></div>';
+      '<div class="hint">Log your weight on the Log tab to see your trend here.</div></div>';
   }
   // 7-day rolling average of the weigh-ins (the start weight counts as its own point)
   var avgPts=pts.map(function(p){var w=pts.filter(function(q){return q.t<=p.t&&q.t>p.t-7*864e5;});return {t:p.t,y:avg(w.map(function(q){return q.y;}))};});
@@ -1765,7 +1765,7 @@ function weightCard(){
     '<div class="tile"><div class="eyebrow">Now (avg)</div><div class="num">'+fmt(now,1)+'<small>kg</small></div></div>'+
     '<div class="tile"><div class="eyebrow">Change</div><div class="num '+(chg>0?'up':'down')+'">'+signed(chg)+'<small>kg</small></div></div></div>'+
     svgLine(pts,{avg:avgPts,dp:1,minPad:0.5,label:'Bodyweight over time with 7-day average'})+
-    '<div class="hint">Dots are your weigh-ins. The line is your 7-day average, which is the number to watch: daily weight jumps around.</div></div>';
+    '<div class="hint">Dots are weigh-ins. The line is your 7-day average.</div></div>';
 }
 function stepsCard(){
   var tgt=(state.trends&&state.trends.stepsTarget)||null,rows=[],any=false;
@@ -1779,7 +1779,7 @@ function stepsCard(){
   var cur=rows[rows.length-1];
   return '<div class="card"><div class="eyebrow">Steps · daily average by week</div>'+
     '<div class="row"><span class="num">'+(cur.v!=null?fmt(cur.v):'–')+'<small>this week</small></span>'+(tgt?'<span class="meta">Target '+fmt(tgt)+'</span>':'')+'</div>'+
-    svgBars(rows,tgt)+'<div class="hint">Each bar is the average of the days you logged that week'+(tgt?'. Green bars hit your target (the dashed line).':'.')+'</div></div>';
+    svgBars(rows,tgt)+(tgt?'<div class="hint">Green bars hit your target.</div>':'')+'</div>';
 }
 function liftCard(){
   var lifts=((state.trends&&state.trends.lifts)||[]).filter(function(l){return l.points.length>=2;});
@@ -1798,7 +1798,7 @@ function liftCard(){
     '<div class="row">'+head+'<span class="meta '+(d>0?'gain':'')+'">'+esc(chg)+'</span></div>'+
     svgLine(p.map(function(x){return {t:fromIso(x.d).getTime(),y:x.v};}),{dp:load?0:0,minPad:load?2.5:1,label:nice(cur.exercise)+' over time'})+
     '<div class="hint">Last time: '+(load?kg(last.load)+' kg × '+last.reps:last.reps+' reps')+', '+fmtDate(fromIso(last.d))+'. '+
-    (load?'Est. 1RM turns your best set into one number, so heavier and more reps both count. Best so far '+kg(best)+' kg.':'Best so far '+best+' reps.')+'</div></div>';
+    (load?'Best so far '+kg(best)+' kg.':'Best so far '+best+' reps.')+'</div></div>';
 }
 function trendsSection(){
   var html=weightCard()+stepsCard()+liftCard()+cardioCard();
@@ -1875,10 +1875,10 @@ function renderBook(){
       (late?'<span class="meta bklate">Message '+esc(CFG.coach)+' to change</span>':'<span class="gnav"><button class="btn ghost" type="button" data-bmove="'+esc(b.id)+'">Move</button><button class="btn ghost" type="button" data-bcancel="'+esc(b.id)+'">Cancel</button></span>')+'</div>';
   }).join('');
   var lead=mv?'Moving '+esc(mv.day)+' at '+esc(mv.time)+'. Pick a new time.':
-    (bk.owed>0?'You have <b>'+bk.owed+'</b> session'+(bk.owed===1?'':'s')+' to book. ':'')+bk.len+'-minute 1-1 sessions with '+esc(CFG.coach)+'.';
+    (bk.owed>0?'You have <b>'+bk.owed+'</b> session'+(bk.owed===1?'':'s')+' to book.':bk.len+'-minute 1-1 sessions with '+esc(CFG.coach)+'.');
   v.innerHTML='<div class="title"><div class="eyebrow">Book</div><div class="h1">'+(mv?'Move your session':'Book a session')+'</div><div class="meta">'+lead+'</div></div>'+
     (mv?'<button class="btn ghost block" type="button" id="bkkeep">Keep it where it is</button>':'')+
-    '<div class="card"><div class="eyebrow">Pick a time</div>'+slotPicker(bk.days,bkDay,'b')+'<div class="meta">Only times that work for '+esc(CFG.coach)+' are shown, so check back as more open up.</div></div>'+
+    '<div class="card"><div class="eyebrow">Pick a time</div>'+slotPicker(bk.days,bkDay,'b')+'<div class="meta">More times open up as '+esc(CFG.coach)+'’s week fills.</div></div>'+
     (mv?'':'<div class="card"><div class="eyebrow">Your sessions</div>'+(rows||'<div class="meta">Nothing booked yet.</div>')+
       (mine.length?'<div class="meta">You can move or cancel up to '+bk.cancelH+' hours before.</div>':'')+'</div>');
   $$('[data-bday]',v).forEach(function(b){b.addEventListener('click',function(){bkDay=b.dataset.bday;renderBook();centreDay(v);});});
@@ -1906,7 +1906,7 @@ function bookConfirm(start){
 }
 function bookCancelAsk(id){
   var b=(bk.mine||[]).filter(function(x){return x.id===id;})[0];if(!b){return;}
-  openSheet('<div class="h2">Cancel '+esc(b.day)+' at '+esc(b.time)+'?</div><div class="meta">'+esc(CFG.coach)+' will get a message so he knows.</div><div class="err" id="bkerr"></div>'+
+  openSheet('<div class="h2">Cancel '+esc(b.day)+' at '+esc(b.time)+'?</div><div class="meta">'+esc(CFG.coach)+' will be told.</div><div class="err" id="bkerr"></div>'+
     '<button class="btn primary block" type="button" id="bkcx">Cancel session</button><button class="btn ghost block" type="button" id="bkno">Keep it</button>');
   $('#bkno').addEventListener('click',closeSheet);
   $('#bkcx').addEventListener('click',function(){
@@ -1932,7 +1932,7 @@ function coachBookCard(){
     list+='<button class="bkline" type="button" data-cbk="'+esc(b.id)+'"><b>'+esc(b.time)+'</b><span>'+esc(b.name)+'</span><span class="meta">'+esc(b.type)+'</span></button>';
   });
   return '<div class="card bkcard"><div class="eyebrow">Bookings</div>'+
-    (cBook.ready?'':'<div class="meta">Set your hours on the Hub’s Booking Settings tab to open booking.</div>')+(cBook.open===false?'<div class="meta bkoff">Booking is <b>switched off</b> for clients and the free session link. You can still book people in here. Turn it back on with the Booking open tick on the Hub’s Booking Settings tab.</div>':'')+
+    (cBook.ready?'':'<div class="meta">Set your hours on the Hub’s Booking Settings tab to open booking.</div>')+(cBook.open===false?'<div class="meta bkoff">Booking is <b>off</b> for clients. You can still book here. Turn it on with the Booking open tick in the Hub.</div>':'')+
     (list||'<div class="meta">Nothing booked yet.</div>')+
     ((cBook.upcoming||[]).length>10?'<div class="meta">+ '+(cBook.upcoming.length-10)+' more on the Hub’s Bookings tab</div>':'')+
     '<button class="btn primary block" type="button" id="cbnew">+ Book someone in</button></div>';
